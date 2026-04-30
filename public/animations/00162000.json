@@ -1,0 +1,522 @@
+{
+  "00162000_idle_N": [
+    "/raw-assets/00162000/00162000.png"
+  ],
+  "00162000_idle_NE": [
+    "/raw-assets/00162000/00162001.png"
+  ],
+  "00162000_idle_E": [
+    "/raw-assets/00162000/00162002.png"
+  ],
+  "00162000_idle_SE": [
+    "/raw-assets/00162000/00162003.png"
+  ],
+  "00162000_idle_S": [
+    "/raw-assets/00162000/00162004.png"
+  ],
+  "00162000_idle_SW": [
+    "/raw-assets/00162000/00162005.png"
+  ],
+  "00162000_idle_W": [
+    "/raw-assets/00162000/00162006.png"
+  ],
+  "00162000_idle_NW": [
+    "/raw-assets/00162000/00162007.png"
+  ],
+  "00162000_walk_N": [
+    "/raw-assets/00162000/00162008.png",
+    "/raw-assets/00162000/00162009.png",
+    "/raw-assets/00162000/00162010.png",
+    "/raw-assets/00162000/00162011.png",
+    "/raw-assets/00162000/00162012.png",
+    "/raw-assets/00162000/00162013.png",
+    "/raw-assets/00162000/00162014.png",
+    "/raw-assets/00162000/00162015.png"
+  ],
+  "00162000_walk_NE": [
+    "/raw-assets/00162000/00162016.png",
+    "/raw-assets/00162000/00162017.png",
+    "/raw-assets/00162000/00162018.png",
+    "/raw-assets/00162000/00162019.png",
+    "/raw-assets/00162000/00162020.png",
+    "/raw-assets/00162000/00162021.png",
+    "/raw-assets/00162000/00162022.png",
+    "/raw-assets/00162000/00162023.png"
+  ],
+  "00162000_walk_E": [
+    "/raw-assets/00162000/00162024.png",
+    "/raw-assets/00162000/00162025.png",
+    "/raw-assets/00162000/00162026.png",
+    "/raw-assets/00162000/00162027.png",
+    "/raw-assets/00162000/00162028.png",
+    "/raw-assets/00162000/00162029.png",
+    "/raw-assets/00162000/00162030.png",
+    "/raw-assets/00162000/00162031.png"
+  ],
+  "00162000_walk_SE": [
+    "/raw-assets/00162000/00162032.png",
+    "/raw-assets/00162000/00162033.png",
+    "/raw-assets/00162000/00162034.png",
+    "/raw-assets/00162000/00162035.png",
+    "/raw-assets/00162000/00162036.png",
+    "/raw-assets/00162000/00162037.png",
+    "/raw-assets/00162000/00162038.png",
+    "/raw-assets/00162000/00162039.png"
+  ],
+  "00162000_walk_S": [
+    "/raw-assets/00162000/00162040.png",
+    "/raw-assets/00162000/00162041.png",
+    "/raw-assets/00162000/00162042.png",
+    "/raw-assets/00162000/00162043.png",
+    "/raw-assets/00162000/00162044.png",
+    "/raw-assets/00162000/00162045.png",
+    "/raw-assets/00162000/00162046.png",
+    "/raw-assets/00162000/00162047.png"
+  ],
+  "00162000_walk_SW": [
+    "/raw-assets/00162000/00162048.png",
+    "/raw-assets/00162000/00162049.png",
+    "/raw-assets/00162000/00162050.png",
+    "/raw-assets/00162000/00162051.png",
+    "/raw-assets/00162000/00162052.png",
+    "/raw-assets/00162000/00162053.png",
+    "/raw-assets/00162000/00162054.png",
+    "/raw-assets/00162000/00162055.png"
+  ],
+  "00162000_walk_W": [
+    "/raw-assets/00162000/00162056.png",
+    "/raw-assets/00162000/00162057.png",
+    "/raw-assets/00162000/00162058.png",
+    "/raw-assets/00162000/00162059.png",
+    "/raw-assets/00162000/00162060.png",
+    "/raw-assets/00162000/00162061.png",
+    "/raw-assets/00162000/00162062.png",
+    "/raw-assets/00162000/00162063.png"
+  ],
+  "00162000_walk_NW": [
+    "/raw-assets/00162000/00162064.png",
+    "/raw-assets/00162000/00162065.png",
+    "/raw-assets/00162000/00162066.png",
+    "/raw-assets/00162000/00162067.png",
+    "/raw-assets/00162000/00162068.png",
+    "/raw-assets/00162000/00162069.png",
+    "/raw-assets/00162000/00162070.png",
+    "/raw-assets/00162000/00162071.png"
+  ],
+  "00162000_grab_N": [
+    "/raw-assets/00162000/00162072.png",
+    "/raw-assets/00162000/00162073.png",
+    "/raw-assets/00162000/00162074.png",
+    "/raw-assets/00162000/00162075.png"
+  ],
+  "00162000_grab_NE": [
+    "/raw-assets/00162000/00162076.png",
+    "/raw-assets/00162000/00162077.png",
+    "/raw-assets/00162000/00162078.png",
+    "/raw-assets/00162000/00162079.png"
+  ],
+  "00162000_grab_E": [
+    "/raw-assets/00162000/00162080.png",
+    "/raw-assets/00162000/00162081.png",
+    "/raw-assets/00162000/00162082.png",
+    "/raw-assets/00162000/00162083.png"
+  ],
+  "00162000_grab_SE": [
+    "/raw-assets/00162000/00162084.png",
+    "/raw-assets/00162000/00162085.png",
+    "/raw-assets/00162000/00162086.png",
+    "/raw-assets/00162000/00162087.png"
+  ],
+  "00162000_grab_S": [
+    "/raw-assets/00162000/00162088.png",
+    "/raw-assets/00162000/00162089.png",
+    "/raw-assets/00162000/00162090.png",
+    "/raw-assets/00162000/00162091.png"
+  ],
+  "00162000_grab_SW": [
+    "/raw-assets/00162000/00162092.png",
+    "/raw-assets/00162000/00162093.png",
+    "/raw-assets/00162000/00162094.png",
+    "/raw-assets/00162000/00162095.png"
+  ],
+  "00162000_grab_W": [
+    "/raw-assets/00162000/00162096.png",
+    "/raw-assets/00162000/00162097.png",
+    "/raw-assets/00162000/00162098.png",
+    "/raw-assets/00162000/00162099.png"
+  ],
+  "00162000_grab_NW": [
+    "/raw-assets/00162000/00162100.png",
+    "/raw-assets/00162000/00162101.png",
+    "/raw-assets/00162000/00162102.png",
+    "/raw-assets/00162000/00162103.png"
+  ],
+  "00162000_pickup_N": [
+    "/raw-assets/00162000/00162104.png",
+    "/raw-assets/00162000/00162105.png",
+    "/raw-assets/00162000/00162106.png",
+    "/raw-assets/00162000/00162107.png"
+  ],
+  "00162000_pickup_NE": [
+    "/raw-assets/00162000/00162108.png",
+    "/raw-assets/00162000/00162109.png",
+    "/raw-assets/00162000/00162110.png",
+    "/raw-assets/00162000/00162111.png"
+  ],
+  "00162000_pickup_E": [
+    "/raw-assets/00162000/00162112.png",
+    "/raw-assets/00162000/00162113.png",
+    "/raw-assets/00162000/00162114.png",
+    "/raw-assets/00162000/00162115.png"
+  ],
+  "00162000_pickup_SE": [
+    "/raw-assets/00162000/00162116.png",
+    "/raw-assets/00162000/00162117.png",
+    "/raw-assets/00162000/00162118.png",
+    "/raw-assets/00162000/00162119.png"
+  ],
+  "00162000_pickup_S": [
+    "/raw-assets/00162000/00162120.png",
+    "/raw-assets/00162000/00162121.png",
+    "/raw-assets/00162000/00162122.png",
+    "/raw-assets/00162000/00162123.png"
+  ],
+  "00162000_pickup_SW": [
+    "/raw-assets/00162000/00162124.png",
+    "/raw-assets/00162000/00162125.png",
+    "/raw-assets/00162000/00162126.png",
+    "/raw-assets/00162000/00162127.png"
+  ],
+  "00162000_pickup_W": [
+    "/raw-assets/00162000/00162128.png",
+    "/raw-assets/00162000/00162129.png",
+    "/raw-assets/00162000/00162130.png",
+    "/raw-assets/00162000/00162131.png"
+  ],
+  "00162000_pickup_NW": [
+    "/raw-assets/00162000/00162132.png",
+    "/raw-assets/00162000/00162133.png",
+    "/raw-assets/00162000/00162134.png",
+    "/raw-assets/00162000/00162135.png"
+  ],
+  "00162000_attack_neutral_N": [
+    "/raw-assets/00162000/00162136.png",
+    "/raw-assets/00162000/00162137.png",
+    "/raw-assets/00162000/00162138.png",
+    "/raw-assets/00162000/00162139.png"
+  ],
+  "00162000_attack_neutral_NE": [
+    "/raw-assets/00162000/00162140.png",
+    "/raw-assets/00162000/00162141.png",
+    "/raw-assets/00162000/00162142.png",
+    "/raw-assets/00162000/00162143.png"
+  ],
+  "00162000_attack_neutral_E": [
+    "/raw-assets/00162000/00162144.png",
+    "/raw-assets/00162000/00162145.png",
+    "/raw-assets/00162000/00162146.png",
+    "/raw-assets/00162000/00162147.png"
+  ],
+  "00162000_attack_neutral_SE": [
+    "/raw-assets/00162000/00162148.png",
+    "/raw-assets/00162000/00162149.png",
+    "/raw-assets/00162000/00162150.png",
+    "/raw-assets/00162000/00162151.png"
+  ],
+  "00162000_attack_neutral_S": [
+    "/raw-assets/00162000/00162152.png",
+    "/raw-assets/00162000/00162153.png",
+    "/raw-assets/00162000/00162154.png",
+    "/raw-assets/00162000/00162155.png"
+  ],
+  "00162000_attack_neutral_SW": [
+    "/raw-assets/00162000/00162156.png",
+    "/raw-assets/00162000/00162157.png",
+    "/raw-assets/00162000/00162158.png",
+    "/raw-assets/00162000/00162159.png"
+  ],
+  "00162000_attack_neutral_W": [
+    "/raw-assets/00162000/00162160.png",
+    "/raw-assets/00162000/00162161.png",
+    "/raw-assets/00162000/00162162.png",
+    "/raw-assets/00162000/00162163.png"
+  ],
+  "00162000_attack_neutral_NW": [
+    "/raw-assets/00162000/00162164.png",
+    "/raw-assets/00162000/00162165.png",
+    "/raw-assets/00162000/00162166.png",
+    "/raw-assets/00162000/00162167.png"
+  ],
+  "00162000_attack_high_N": [
+    "/raw-assets/00162000/00162168.png",
+    "/raw-assets/00162000/00162169.png",
+    "/raw-assets/00162000/00162170.png",
+    "/raw-assets/00162000/00162171.png"
+  ],
+  "00162000_attack_high_NE": [
+    "/raw-assets/00162000/00162172.png",
+    "/raw-assets/00162000/00162173.png",
+    "/raw-assets/00162000/00162174.png",
+    "/raw-assets/00162000/00162175.png"
+  ],
+  "00162000_attack_high_E": [
+    "/raw-assets/00162000/00162176.png",
+    "/raw-assets/00162000/00162177.png",
+    "/raw-assets/00162000/00162178.png",
+    "/raw-assets/00162000/00162179.png"
+  ],
+  "00162000_attack_high_SE": [
+    "/raw-assets/00162000/00162180.png",
+    "/raw-assets/00162000/00162181.png",
+    "/raw-assets/00162000/00162182.png",
+    "/raw-assets/00162000/00162183.png"
+  ],
+  "00162000_attack_high_S": [
+    "/raw-assets/00162000/00162184.png",
+    "/raw-assets/00162000/00162185.png",
+    "/raw-assets/00162000/00162186.png",
+    "/raw-assets/00162000/00162187.png"
+  ],
+  "00162000_attack_high_SW": [
+    "/raw-assets/00162000/00162188.png",
+    "/raw-assets/00162000/00162189.png",
+    "/raw-assets/00162000/00162190.png",
+    "/raw-assets/00162000/00162191.png"
+  ],
+  "00162000_attack_high_W": [
+    "/raw-assets/00162000/00162192.png",
+    "/raw-assets/00162000/00162193.png",
+    "/raw-assets/00162000/00162194.png",
+    "/raw-assets/00162000/00162195.png"
+  ],
+  "00162000_attack_high_NW": [
+    "/raw-assets/00162000/00162196.png",
+    "/raw-assets/00162000/00162197.png",
+    "/raw-assets/00162000/00162198.png",
+    "/raw-assets/00162000/00162199.png"
+  ],
+  "00162000_shove_N": [
+    "/raw-assets/00162000/00162200.png",
+    "/raw-assets/00162000/00162201.png",
+    "/raw-assets/00162000/00162202.png",
+    "/raw-assets/00162000/00162203.png"
+  ],
+  "00162000_shove_NE": [
+    "/raw-assets/00162000/00162204.png",
+    "/raw-assets/00162000/00162205.png",
+    "/raw-assets/00162000/00162206.png",
+    "/raw-assets/00162000/00162207.png"
+  ],
+  "00162000_shove_E": [
+    "/raw-assets/00162000/00162208.png",
+    "/raw-assets/00162000/00162209.png",
+    "/raw-assets/00162000/00162210.png",
+    "/raw-assets/00162000/00162211.png"
+  ],
+  "00162000_shove_SE": [
+    "/raw-assets/00162000/00162212.png",
+    "/raw-assets/00162000/00162213.png",
+    "/raw-assets/00162000/00162214.png",
+    "/raw-assets/00162000/00162215.png"
+  ],
+  "00162000_shove_S": [
+    "/raw-assets/00162000/00162216.png",
+    "/raw-assets/00162000/00162217.png",
+    "/raw-assets/00162000/00162218.png",
+    "/raw-assets/00162000/00162219.png"
+  ],
+  "00162000_shove_SW": [
+    "/raw-assets/00162000/00162220.png",
+    "/raw-assets/00162000/00162221.png",
+    "/raw-assets/00162000/00162222.png",
+    "/raw-assets/00162000/00162223.png"
+  ],
+  "00162000_shove_W": [
+    "/raw-assets/00162000/00162224.png",
+    "/raw-assets/00162000/00162225.png",
+    "/raw-assets/00162000/00162226.png",
+    "/raw-assets/00162000/00162227.png"
+  ],
+  "00162000_shove_NW": [
+    "/raw-assets/00162000/00162228.png",
+    "/raw-assets/00162000/00162229.png",
+    "/raw-assets/00162000/00162230.png",
+    "/raw-assets/00162000/00162231.png"
+  ],
+  "00162000_cast_neutral_N": [
+    "/raw-assets/00162000/00162232.png",
+    "/raw-assets/00162000/00162233.png",
+    "/raw-assets/00162000/00162234.png",
+    "/raw-assets/00162000/00162235.png",
+    "/raw-assets/00162000/00162236.png",
+    "/raw-assets/00162000/00162237.png",
+    "/raw-assets/00162000/00162238.png",
+    "/raw-assets/00162000/00162239.png"
+  ],
+  "00162000_cast_neutral_NE": [
+    "/raw-assets/00162000/00162240.png",
+    "/raw-assets/00162000/00162241.png",
+    "/raw-assets/00162000/00162242.png",
+    "/raw-assets/00162000/00162243.png",
+    "/raw-assets/00162000/00162244.png",
+    "/raw-assets/00162000/00162245.png",
+    "/raw-assets/00162000/00162246.png",
+    "/raw-assets/00162000/00162247.png"
+  ],
+  "00162000_cast_neutral_E": [
+    "/raw-assets/00162000/00162248.png",
+    "/raw-assets/00162000/00162249.png",
+    "/raw-assets/00162000/00162250.png",
+    "/raw-assets/00162000/00162251.png",
+    "/raw-assets/00162000/00162252.png",
+    "/raw-assets/00162000/00162253.png",
+    "/raw-assets/00162000/00162254.png",
+    "/raw-assets/00162000/00162255.png"
+  ],
+  "00162000_cast_neutral_SE": [
+    "/raw-assets/00162000/00162256.png",
+    "/raw-assets/00162000/00162257.png",
+    "/raw-assets/00162000/00162258.png",
+    "/raw-assets/00162000/00162259.png",
+    "/raw-assets/00162000/00162260.png",
+    "/raw-assets/00162000/00162261.png",
+    "/raw-assets/00162000/00162262.png",
+    "/raw-assets/00162000/00162263.png"
+  ],
+  "00162000_cast_neutral_S": [
+    "/raw-assets/00162000/00162264.png",
+    "/raw-assets/00162000/00162265.png",
+    "/raw-assets/00162000/00162266.png",
+    "/raw-assets/00162000/00162267.png",
+    "/raw-assets/00162000/00162268.png",
+    "/raw-assets/00162000/00162269.png",
+    "/raw-assets/00162000/00162270.png",
+    "/raw-assets/00162000/00162271.png"
+  ],
+  "00162000_cast_neutral_SW": [
+    "/raw-assets/00162000/00162272.png",
+    "/raw-assets/00162000/00162273.png",
+    "/raw-assets/00162000/00162274.png",
+    "/raw-assets/00162000/00162275.png",
+    "/raw-assets/00162000/00162276.png",
+    "/raw-assets/00162000/00162277.png",
+    "/raw-assets/00162000/00162278.png",
+    "/raw-assets/00162000/00162279.png"
+  ],
+  "00162000_cast_neutral_W": [
+    "/raw-assets/00162000/00162280.png",
+    "/raw-assets/00162000/00162281.png",
+    "/raw-assets/00162000/00162282.png",
+    "/raw-assets/00162000/00162283.png",
+    "/raw-assets/00162000/00162284.png",
+    "/raw-assets/00162000/00162285.png",
+    "/raw-assets/00162000/00162286.png",
+    "/raw-assets/00162000/00162287.png"
+  ],
+  "00162000_cast_neutral_NW": [
+    "/raw-assets/00162000/00162288.png",
+    "/raw-assets/00162000/00162289.png",
+    "/raw-assets/00162000/00162290.png",
+    "/raw-assets/00162000/00162291.png",
+    "/raw-assets/00162000/00162292.png",
+    "/raw-assets/00162000/00162293.png",
+    "/raw-assets/00162000/00162294.png",
+    "/raw-assets/00162000/00162295.png"
+  ],
+  "00162000_cast_high_N": [
+    "/raw-assets/00162000/00162296.png",
+    "/raw-assets/00162000/00162297.png",
+    "/raw-assets/00162000/00162298.png",
+    "/raw-assets/00162000/00162299.png"
+  ],
+  "00162000_cast_high_NE": [
+    "/raw-assets/00162000/00162300.png",
+    "/raw-assets/00162000/00162301.png",
+    "/raw-assets/00162000/00162302.png",
+    "/raw-assets/00162000/00162303.png"
+  ],
+  "00162000_cast_high_E": [
+    "/raw-assets/00162000/00162304.png",
+    "/raw-assets/00162000/00162305.png",
+    "/raw-assets/00162000/00162306.png",
+    "/raw-assets/00162000/00162307.png"
+  ],
+  "00162000_cast_high_SE": [
+    "/raw-assets/00162000/00162308.png",
+    "/raw-assets/00162000/00162309.png",
+    "/raw-assets/00162000/00162310.png",
+    "/raw-assets/00162000/00162311.png"
+  ],
+  "00162000_cast_high_S": [
+    "/raw-assets/00162000/00162312.png",
+    "/raw-assets/00162000/00162313.png",
+    "/raw-assets/00162000/00162314.png",
+    "/raw-assets/00162000/00162315.png"
+  ],
+  "00162000_cast_high_SW": [
+    "/raw-assets/00162000/00162316.png",
+    "/raw-assets/00162000/00162317.png",
+    "/raw-assets/00162000/00162318.png",
+    "/raw-assets/00162000/00162319.png"
+  ],
+  "00162000_cast_high_W": [
+    "/raw-assets/00162000/00162320.png",
+    "/raw-assets/00162000/00162321.png",
+    "/raw-assets/00162000/00162322.png",
+    "/raw-assets/00162000/00162323.png"
+  ],
+  "00162000_cast_high_NW": [
+    "/raw-assets/00162000/00162324.png",
+    "/raw-assets/00162000/00162325.png",
+    "/raw-assets/00162000/00162326.png",
+    "/raw-assets/00162000/00162327.png"
+  ],
+  "00162000_die_N": [
+    "/raw-assets/00162000/00162328.png",
+    "/raw-assets/00162000/00162329.png",
+    "/raw-assets/00162000/00162330.png",
+    "/raw-assets/00162000/00162331.png"
+  ],
+  "00162000_die_NE": [
+    "/raw-assets/00162000/00162332.png",
+    "/raw-assets/00162000/00162333.png",
+    "/raw-assets/00162000/00162334.png",
+    "/raw-assets/00162000/00162335.png"
+  ],
+  "00162000_die_E": [
+    "/raw-assets/00162000/00162336.png",
+    "/raw-assets/00162000/00162337.png",
+    "/raw-assets/00162000/00162338.png",
+    "/raw-assets/00162000/00162339.png"
+  ],
+  "00162000_die_SE": [
+    "/raw-assets/00162000/00162340.png",
+    "/raw-assets/00162000/00162341.png",
+    "/raw-assets/00162000/00162342.png",
+    "/raw-assets/00162000/00162343.png"
+  ],
+  "00162000_die_S": [
+    "/raw-assets/00162000/00162344.png",
+    "/raw-assets/00162000/00162345.png",
+    "/raw-assets/00162000/00162346.png",
+    "/raw-assets/00162000/00162347.png"
+  ],
+  "00162000_die_SW": [
+    "/raw-assets/00162000/00162348.png",
+    "/raw-assets/00162000/00162349.png",
+    "/raw-assets/00162000/00162350.png",
+    "/raw-assets/00162000/00162351.png"
+  ],
+  "00162000_die_W": [
+    "/raw-assets/00162000/00162352.png",
+    "/raw-assets/00162000/00162353.png",
+    "/raw-assets/00162000/00162354.png",
+    "/raw-assets/00162000/00162355.png"
+  ],
+  "00162000_die_NW": [
+    "/raw-assets/00162000/00162356.png",
+    "/raw-assets/00162000/00162357.png",
+    "/raw-assets/00162000/00162358.png",
+    "/raw-assets/00162000/00162359.png"
+  ]
+}

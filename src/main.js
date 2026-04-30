@@ -5,7 +5,31 @@ import { LightingManager, MODE } from './lighting.js';
 import { floorTex, wallTex, floorSpriteTex, wallSpriteTex, playerSpriteTex } from './textures.js';
 import { initSlicer } from './slicer.js';
 import { SCENES } from './scenes.js';
+import { CharacterAnimator, vecToDirection } from './CharacterAnimator.js';
+import { Projectile } from './Projectile.js';
 import './style.css';
+
+// ── Active Projectiles ────────────────────────────────────────────────────────
+const activeProjectiles = [];
+
+// Set to true immediately before triggerAction so the onActionFrame handler
+// knows to spawn exactly one fireball per cast — guards against frame-skip
+// delivering frameIdx > 4 on the first callback.
+let _castSpawnPending = false;
+
+function spawnFireball(direction) {
+  activeProjectiles.push(
+    new Projectile(scene, player.position.x, player.position.z, direction)
+  );
+}
+
+// ── Character configuration ───────────────────────────────────────────────────
+// Set PLAYER_CHARACTER_ID to the folder/base ID used when slicing animations
+// in the Asset Lab (the prefix before _action_direction in every state key).
+// Export the dict from the lab with "↓ Anim Dict" and place it at:
+//   public/animations/<PLAYER_CHARACTER_ID>.json
+const PLAYER_CHARACTER_ID = '00162000';
+const PLAYER_ANIM_FPS     = 12;
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -67,6 +91,59 @@ playerSprite.center.set(0.5, 0.1);
 playerSprite.visible = false;
 scene.add(playerSprite);
 
+// ── Character Animator ───────────────────────────────────────────────────────
+// Nullable until the animation JSON has been fetched and parsed.
+// The sprite material's .map is swapped to the animator's hot-swap texture
+// once the dict loads; until then the static fallback diamond renders.
+let animator = null;
+
+async function loadCharacter(baseId, fps) {
+  try {
+    const res = await fetch(`/animations/${baseId}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const dict = await res.json();
+
+    const anim = new CharacterAnimator(dict, baseId, fps);
+
+    // IMPORTANT: wait for the first frame image to fully decode before wiring
+    // the animator's texture to the sprite material.  THREE.Texture with an
+    // undefined .image uploads as fully transparent — the sprite goes invisible.
+    await anim.waitForFirstFrame();
+
+    animator = anim;
+    // When a combat animation finishes, immediately re-evaluate WASD so the
+    // character snaps back to idle/walk without waiting for the next input event.
+    animator.onUnlock = () => {
+      _castSpawnPending = false;  // clean up if the spawn frame was never reached
+      handleInput();
+    };
+    // Spawn a fireball on frame 4 of cast_neutral (the animation's action frame).
+    // frameIdx >= 4 tolerates rare lag spikes that skip the exact index.
+    animator.onActionFrame = (action, frameIdx) => {
+      if (action === 'cast_neutral' && _castSpawnPending && frameIdx >= 4) {
+        _castSpawnPending = false;
+        spawnFireball(animator.direction);
+      }
+    };
+    playerSpriteMat.map         = animator.texture;
+    playerSpriteMat.needsUpdate = true;
+
+    console.log(
+      `[CharacterAnimator] "${baseId}" live — ${Object.keys(dict).length} states`
+    );
+  } catch (e) {
+    // Keep animator null → sprite material retains playerSpriteTex (diamond fallback).
+    // Visible > invisible: the player is always findable even without real sprites.
+    animator = null;
+    console.warn(
+      `[CharacterAnimator] "${baseId}" failed — diamond fallback active.\n` +
+      `  Reason: ${e.message}\n` +
+      `  If the JSON loaded but sprites are missing:\n` +
+      `  → Use "↓ Character Pack" in the Asset Lab and unzip into public/.`
+    );
+  }
+}
+
 // ── Level & Lighting ──────────────────────────────────────────────────────────
 const levelManager = new LevelManager();
 levelManager.loadWorld(1);
@@ -118,11 +195,23 @@ function applyPreset(key) {
 
 // ── Keyboard Input ────────────────────────────────────────────────────────────
 const keys = new Set();
-const ATTACK_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+
+// Isometric camera sits at (+20, +20, +20) — arrow keys map to the four
+// diagonal compass directions as seen from that angle.
+const ARROW_DIRECTION = {
+  ArrowUp:    'NW',
+  ArrowRight: 'NE',
+  ArrowDown:  'SE',
+  ArrowLeft:  'SW',
+};
 
 window.addEventListener('keydown', e => {
   keys.add(e.code);
-  if (ATTACK_KEYS.has(e.code)) console.log('Attack Action');
+  const dir = ARROW_DIRECTION[e.code];
+  if (dir && animator) {
+    _castSpawnPending = true;
+    animator.triggerAction('cast_neutral', dir);
+  }
 });
 window.addEventListener('keyup', e => keys.delete(e.code));
 
@@ -142,6 +231,18 @@ function handleInput() {
   if (keys.has('KeyS')) dz += SPEED;
   if (keys.has('KeyA')) dx -= SPEED;
   if (keys.has('KeyD')) dx += SPEED;
+
+  // ── Animator state ──
+  // Use the raw input vector (before collision) so the character faces the
+  // intended direction even when blocked by a wall.
+  // setState() is a no-op while isLocked, but we skip the vecToDirection work too.
+  if (animator && !animator.isLocked) {
+    const moving = dx !== 0 || dz !== 0;
+    const action = moving ? 'walk' : 'idle';
+    // Keep facing the last direction when going idle — don't reset to default.
+    const dir    = moving ? vecToDirection(dx, dz) : animator.direction;
+    animator.setState(action, dir);
+  }
 
   // Each axis is tested independently so the player slides along walls
   // rather than stopping dead on diagonal contact.
@@ -290,8 +391,6 @@ function seedScene(key) {
   const sceneData = SCENES[key];
   if (!sceneData) return;
   levelManager.seedWorld(sceneData.grid);
-  // In 3D mode, translate any dict-type IDs to TILE constants before rebuilding
-  // so walls and floors resolve correctly without a manual mode-toggle.
   if (worldRenderer.renderMode === '3D') worldRenderer.syncWorlds();
   worldRenderer.rebuild();
   player.position.set(sceneData.spawn.x, 0.5, sceneData.spawn.z);
@@ -302,7 +401,48 @@ function seedScene(key) {
   lighting.computeFOV(player.position);
 }
 
-$id('world-select').addEventListener('change', e => seedScene(e.target.value));
+// ── Map file loader ───────────────────────────────────────────────────────────
+// Fetches /maps/<mapId>.json, merges floor + props into a single grid, then
+// seeds the engine exactly as seedScene does.  Falls back to seedScene on error.
+async function loadMap(mapId, fallbackKey) {
+  let data;
+  try {
+    const res = await fetch(`/maps/${mapId}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    data = await res.json();
+  } catch (e) {
+    console.warn(`[loadMap] Could not load /maps/${mapId}.json (${e.message}), falling back to built-in scene.`);
+    seedScene(fallbackKey);
+    return;
+  }
+
+  // Build merged grid: start from floor layer, overlay prop tile IDs.
+  const grid = data.floor.map(row => [...row]);
+  for (const p of (data.props ?? [])) {
+    if (grid[p.z] !== undefined) grid[p.z][p.x] = p.id;
+  }
+
+  levelManager.seedWorld(grid);
+  if (worldRenderer.renderMode === '3D') worldRenderer.syncWorlds();
+  worldRenderer.rebuild();
+  const spawn = data.spawn ?? { x: 1, z: 1 };
+  player.position.set(spawn.x, 0.5, spawn.z);
+  $id('dt-world').textContent = data.name ?? mapId;
+  lastGX = null;
+  lastGZ = null;
+  lighting.invalidateFOV();
+  lighting.computeFOV(player.position);
+}
+
+$id('world-select').addEventListener('change', e => {
+  const key = e.target.value;
+  const sceneData = SCENES[key];
+  if (sceneData?.mapFile) {
+    loadMap(sceneData.mapFile, key);
+  } else {
+    seedScene(key);
+  }
+});
 
 $id('btn-light').addEventListener('click', () => {
   lighting.toggle();
@@ -404,10 +544,30 @@ window.addEventListener('resize', () => {
 });
 
 // ── Animation Loop ────────────────────────────────────────────────────────────
+let _lastFrameTime = performance.now();
+
 function animate() {
   requestAnimationFrame(animate);
 
+  const now        = performance.now();
+  const deltaMs    = Math.min(now - _lastFrameTime, 100); // cap at 100ms to survive tab-switch lag
+  _lastFrameTime   = now;
+
   handleInput();
+
+  // Advance sprite animation by elapsed real time — independent of render FPS.
+  animator?.update(deltaMs);
+
+  // Advance all live projectiles and GC any that have expired.
+  // Iterating backwards lets splice() not skip elements.
+  for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+    const p = activeProjectiles[i];
+    p.update(deltaMs);
+    if (!p.alive) {
+      p.dispose();
+      activeProjectiles.splice(i, 1);
+    }
+  }
 
   // Smooth isometric camera follow — maintain constant (20, 20, 20) offset
   camera.position.set(
@@ -438,6 +598,11 @@ lighting.computeFOV(player.position);
 
 // Boot the slicer — completely isolated from the game loop.
 initSlicer();
+
+// Load the player character's animation dictionary.
+// Place the exported JSON at public/animations/<PLAYER_CHARACTER_ID>.json
+// (export it from the Asset Lab using the "↓ Anim Dict" button).
+loadCharacter(PLAYER_CHARACTER_ID, PLAYER_ANIM_FPS);
 
 animate();
 console.log('Three.js initialized');

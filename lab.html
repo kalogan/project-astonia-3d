@@ -529,6 +529,342 @@
       min-height: 18px;
     }
     .ld-status.error { color: var(--red); }
+
+    /* ── Viewer mode tabs ────────────────────────────────────────────────────── */
+    #viewer-tabs-hdr { gap: 4px; }
+
+    .vtab {
+      background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; padding: 0 6px; height: 100%;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-dim);
+      transition: color 0.1s, border-color 0.1s;
+    }
+    .vtab:hover  { color: var(--text); }
+    .vtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .vtab:focus-visible {
+      outline: 2px solid var(--focus-ring); outline-offset: -2px; border-radius: 2px;
+    }
+
+    /* ── Sprites view wrapper ────────────────────────────────────────────────── */
+    #sprites-view {
+      display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;
+    }
+
+    /* ── Map editor ──────────────────────────────────────────────────────────── */
+    #map-editor {
+      display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;
+    }
+    #map-editor.active { display: flex; }
+
+    #map-toolbar {
+      flex-shrink: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 6px 12px; background: var(--panel-alt);
+      border-bottom: 1px solid var(--border); min-height: 44px;
+    }
+
+    #brush-display {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 8px 4px 4px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 5px;
+    }
+    #brush-swatch {
+      width: 28px; height: 28px; flex-shrink: 0;
+      border-radius: 4px; border: 1px solid var(--border-dim);
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+    }
+    #brush-swatch img {
+      width: 100%; height: 100%; object-fit: contain;
+      image-rendering: pixelated; image-rendering: crisp-edges;
+    }
+    #brush-label-text {
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-dim); min-width: 80px;
+    }
+
+    .map-sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
+
+    .map-tool-group { display: flex; align-items: center; gap: 5px; }
+    .map-tool-lbl {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+    }
+    .map-dim-input {
+      width: 50px; min-height: 30px; padding: 0 6px;
+      background: var(--surface); color: var(--text-hi);
+      border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font-mono); font-size: 13px; text-align: center;
+      outline: none; transition: border-color 0.1s;
+    }
+    .map-dim-input:focus { border-color: var(--focus-ring); }
+
+    .map-btn {
+      min-height: 30px; padding: 0 11px;
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border); border-radius: 4px;
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    .map-btn:hover { background: #1e2a3a; border-color: #4b5563; color: var(--text-hi); }
+    .map-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+    #map-btn-erase.active {
+      background: rgba(251,146,60,0.1); color: var(--orange);
+      border-color: rgba(251,146,60,0.4);
+    }
+    #map-btn-download {
+      margin-left: auto; color: var(--green); border-color: rgba(52,211,153,0.35);
+    }
+    #map-btn-download:hover {
+      background: rgba(52,211,153,0.08); border-color: rgba(52,211,153,0.6);
+    }
+
+    #map-canvas-wrap {
+      flex: 1; overflow: auto; padding: 20px; background: var(--bg);
+    }
+    #map-canvas { cursor: crosshair; display: block; }
+
+    /* Dictionary row — brush selection */
+    .cl-row { cursor: pointer; border-left: 2px solid transparent; }
+    .cl-row.brush-sel {
+      background: rgba(56,189,248,0.07); border-left-color: var(--accent);
+    }
+
+    /* ── Multi-select ────────────────────────────────────────────────────────── */
+    .grid-cell.multi-sel {
+      border: 2px solid var(--amber);
+      background: rgba(251,191,36,0.08);
+      box-shadow: 0 0 0 1px rgba(251,191,36,0.2);
+    }
+
+    /* ── Right pane tabs ─────────────────────────────────────────────────────── */
+    #right-tabs-hdr { gap: 4px; }
+    .rtab {
+      background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; padding: 0 6px; height: 100%;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-dim);
+      transition: color 0.1s, border-color 0.1s;
+    }
+    .rtab:hover  { color: var(--text); }
+    .rtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .rtab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; border-radius: 2px; }
+
+    /* ── Right pane panel containers ────────────────────────────────────────── */
+    #right-curation-panel {
+      display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;
+    }
+    #right-collections-panel {
+      display: none; flex-direction: column; flex: 1; overflow: hidden; min-height: 0;
+    }
+    #right-collections-panel.active { display: flex; }
+
+    /* Active selection bar */
+    #coll-sel-bar {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-bottom: 1px solid var(--border);
+      background: var(--panel-alt);
+    }
+    #coll-sel-count {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--amber);
+    }
+    .coll-ghost-btn {
+      background: none; border: 1px solid transparent; border-radius: 4px;
+      color: var(--text-dim); cursor: pointer; font-size: 12px; font-weight: 600;
+      padding: 3px 8px; transition: color 0.1s, border-color 0.1s;
+    }
+    .coll-ghost-btn:hover { color: var(--text-hi); border-color: var(--border); }
+    .coll-ghost-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+    /* Create collection form */
+    #coll-form { flex-shrink: 0; padding: 10px 12px 12px; border-bottom: 1px solid var(--border); }
+    #coll-create-btn {
+      width: 100%; min-height: 40px; margin-top: 8px;
+      background: rgba(56,189,248,0.1); color: var(--accent);
+      border: 1px solid rgba(56,189,248,0.35); border-radius: 5px;
+      font-family: var(--font); font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    #coll-create-btn:hover { background: rgba(56,189,248,0.18); border-color: var(--focus-ring); color: var(--text-hi); }
+    #coll-create-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    #coll-create-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* Collections list */
+    #coll-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+    .coll-item {
+      display: flex; align-items: center; gap: 6px; padding: 6px;
+      border-radius: 4px; border-bottom: 1px solid var(--border-dim);
+      border-left: 2px solid transparent;
+      cursor: pointer; transition: background 0.08s;
+    }
+    .coll-item:hover { background: rgba(55,65,81,0.3); }
+    .coll-item.active-coll { background: rgba(56,189,248,0.07); border-left-color: var(--accent); }
+    .coll-type-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px;
+      letter-spacing: 0.3px; flex-shrink: 0; text-transform: uppercase; white-space: nowrap;
+    }
+    .coll-type-animation { background: rgba(20,80,50,0.55);  color: #86efac; border: 1px solid rgba(74,222,128,0.3); }
+    .coll-type-tilemap   { background: rgba(20,50,110,0.55); color: #93c5fd; border: 1px solid rgba(96,165,250,0.3); }
+    .coll-type-prop      { background: rgba(120,60,10,0.55); color: #fed7aa; border: 1px solid rgba(251,146,60,0.3); }
+    .coll-item-name {
+      flex: 1; font-size: 13px; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .coll-item-count { font-size: 12px; color: var(--text-dim); flex-shrink: 0; }
+    .coll-item-del {
+      background: none; border: 1px solid transparent; border-radius: 3px;
+      color: var(--text-dim); cursor: pointer; font-size: 16px; line-height: 1;
+      padding: 2px 5px; flex-shrink: 0; transition: color 0.1s, border-color 0.1s, background 0.1s;
+    }
+    .coll-item-del:hover { color: var(--red); border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.08); }
+
+    /* Export */
+    #coll-export-wrap { flex-shrink: 0; padding: 8px 10px; border-top: 1px solid var(--border); }
+    .ca-export { color: var(--purple); border-color: rgba(167,139,250,0.35); }
+    .ca-export:hover { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.6); }
+
+    /* ── Curation mode tabs ─────────────────────────────────────────────────── */
+    #curation-mode-hdr { gap: 4px; }
+    .ctab {
+      background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; padding: 0 6px; height: 100%;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 2.5px; text-transform: uppercase; color: var(--text-dim);
+      transition: color 0.1s, border-color 0.1s;
+    }
+    .ctab:hover  { color: var(--text); }
+    .ctab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .ctab:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; border-radius: 2px; }
+
+    #curation-manual-section { flex-shrink: 0; }
+    #curation-slicer-section {
+      display: none; flex-direction: column; flex-shrink: 0;
+      border-bottom: 1px solid var(--border); max-height: 62vh; overflow-y: auto;
+    }
+    #curation-slicer-section.active { display: flex; }
+
+    /* ── Slicer panel ────────────────────────────────────────────────────────── */
+    #slicer-panel { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+    .slicer-row { display: flex; align-items: center; gap: 8px; }
+    .slicer-label {
+      font-size: 12px; font-weight: 600; color: var(--text);
+      text-transform: uppercase; letter-spacing: 0.8px; width: 68px; flex-shrink: 0;
+    }
+    .slicer-sep { height: 1px; background: var(--border-dim); margin: 2px 0; }
+    .slicer-actions-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .slicer-actions-hdr-lbl {
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1px;
+    }
+    #slicer-actions-list { display: flex; flex-direction: column; gap: 4px; }
+    .slicer-action-row { display: flex; align-items: center; gap: 5px; }
+    .slicer-action-row .map-dim-input { min-height: 30px; text-align: left; }
+    .slicer-action-row .map-dim-input[type="number"] { width: 54px; text-align: center; }
+    .slicer-del-btn {
+      background: none; border: 1px solid transparent; border-radius: 3px;
+      color: var(--text-dim); cursor: pointer; font-size: 16px; line-height: 1;
+      padding: 2px 5px; flex-shrink: 0; min-height: 30px;
+      transition: color 0.1s, border-color 0.1s, background 0.1s;
+    }
+    .slicer-del-btn:hover { color: var(--red); border-color: rgba(248,113,113,0.4); background: rgba(248,113,113,0.08); }
+    .slicer-btn {
+      min-height: 32px; padding: 0 12px; border-radius: 4px;
+      font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer;
+      white-space: nowrap; transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    .slicer-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    .slicer-btn-add {
+      background: var(--surface); color: var(--text); border: 1px solid var(--border);
+    }
+    .slicer-btn-add:hover { background: #1e2a3a; border-color: #4b5563; color: var(--text-hi); }
+    .slicer-btn-generate {
+      width: 100%; background: rgba(167,139,250,0.1); color: var(--purple);
+      border: 1px solid rgba(167,139,250,0.35);
+    }
+    .slicer-btn-generate:hover { background: rgba(167,139,250,0.18); border-color: var(--purple); }
+
+    /* ── Slicer states preview ───────────────────────────────────────────────── */
+    #slicer-states-wrap {
+      padding: 0 12px 10px; display: flex; flex-direction: column; gap: 6px;
+      border-top: 1px solid var(--border-dim);
+    }
+    .slicer-states-hdr {
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 1px; padding-top: 8px;
+    }
+    #slicer-state-select {
+      width: 100%; min-height: 34px; padding: 0 28px 0 8px;
+      background: var(--surface)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E")
+        no-repeat right 8px center;
+      color: var(--text-hi); border: 1px solid var(--border); border-radius: 5px;
+      font-family: var(--font-mono); font-size: 12px;
+      cursor: pointer; -webkit-appearance: none; appearance: none; outline: none;
+    }
+    #slicer-state-select:hover { border-color: #4b5563; }
+    #slicer-state-select:focus { border-color: var(--focus-ring); }
+    #slicer-state-select option { background: #141820; color: var(--text-hi); }
+    #slicer-stats {
+      font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); min-height: 14px;
+    }
+    .slicer-btn-append {
+      width: 100%; background: rgba(52,211,153,0.1); color: var(--green);
+      border: 1px solid rgba(52,211,153,0.35);
+    }
+    .slicer-btn-append:hover { background: rgba(52,211,153,0.18); border-color: var(--green); }
+
+    /* ── Astonia quick-process bar ──────────────────────────────────────────── */
+    #astonia-quick-bar {
+      flex-shrink: 0; padding: 8px 12px 10px;
+      display: flex; flex-direction: column; gap: 6px;
+      background: rgba(167,139,250,0.05);
+      border-bottom: 1px solid rgba(167,139,250,0.2);
+      border-left: 3px solid var(--purple);
+    }
+    #astonia-bar-top { display: flex; align-items: center; gap: 8px; }
+    #astonia-badge {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--purple);
+      background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3);
+      border-radius: 3px; padding: 1px 6px; flex-shrink: 0;
+    }
+    #astonia-frame-count { font-size: 12px; color: var(--text-dim); }
+    #astonia-bar-row { display: flex; gap: 6px; align-items: center; }
+    #astonia-base-id { flex: 1; font-size: 13px; min-height: 34px; }
+    #astonia-process-btn {
+      min-height: 34px; padding: 0 12px; flex-shrink: 0;
+      background: rgba(167,139,250,0.1); color: var(--purple);
+      border: 1px solid rgba(167,139,250,0.35); border-radius: 5px;
+      font-family: var(--font); font-size: 13px; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    #astonia-process-btn:hover {
+      background: rgba(167,139,250,0.18); border-color: var(--purple); color: var(--text-hi);
+    }
+    #astonia-process-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+    #astonia-status {
+      font-size: 11px; font-family: var(--font-mono); color: var(--green); min-height: 14px;
+    }
+
+    /* Select element for collections form */
+    .cf-select {
+      flex: 1; min-height: 44px; padding: 0 32px 0 10px;
+      background: var(--surface)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E")
+        no-repeat right 10px center;
+      color: var(--text-hi); border: 1px solid var(--border); border-radius: 5px;
+      font-family: var(--font); font-size: 14px;
+      cursor: pointer; -webkit-appearance: none; appearance: none; outline: none;
+      transition: border-color 0.1s;
+    }
+    .cf-select:hover  { border-color: #4b5563; }
+    .cf-select:focus  { border-color: var(--focus-ring); }
+    .cf-select option { background: #141820; color: var(--text-hi); }
   </style>
 </head>
 <body>
@@ -596,6 +932,15 @@
     <!-- ── Center: Viewer ────────────────────────────────────────────────── -->
     <main class="pane" id="pane-viewer" aria-label="Sprite viewer">
 
+      <div class="pane-hdr" id="viewer-tabs-hdr" role="tablist" aria-label="View mode">
+        <button class="vtab active" role="tab" data-mode="sprites" id="vtab-sprites"
+                aria-selected="true">Sprites</button>
+        <button class="vtab" role="tab" data-mode="map" id="vtab-map"
+                aria-selected="false">Map Editor</button>
+      </div>
+
+      <div id="sprites-view">
+
       <div id="flipbook" aria-label="Flipbook previewer">
         <div id="flip-top">
 
@@ -633,11 +978,104 @@
         </div>
       </div>
 
+      </div><!-- end #sprites-view -->
+
+      <!-- ── Map Editor ──────────────────────────────────────────────────── -->
+      <div id="map-editor" aria-label="Map editor">
+
+        <div id="map-toolbar">
+          <div id="brush-display" aria-label="Active brush">
+            <div id="brush-swatch" aria-hidden="true"></div>
+            <span class="map-tool-lbl">Brush</span>
+            <span id="brush-label-text">— none —</span>
+          </div>
+
+          <div class="map-sep" aria-hidden="true"></div>
+
+          <div class="map-tool-group">
+            <label class="map-tool-lbl" for="map-cols-input">W</label>
+            <input class="map-dim-input" type="number" id="map-cols-input"
+                   value="16" min="4" max="64" aria-label="Map width in tiles">
+          </div>
+          <div class="map-tool-group">
+            <label class="map-tool-lbl" for="map-rows-input">H</label>
+            <input class="map-dim-input" type="number" id="map-rows-input"
+                   value="16" min="4" max="64" aria-label="Map height in tiles">
+          </div>
+          <button class="map-btn" id="map-btn-resize">Resize</button>
+
+          <div class="map-sep" aria-hidden="true"></div>
+
+          <button class="map-btn" id="map-btn-erase" aria-pressed="false">⌫ Erase</button>
+          <button class="map-btn" id="map-btn-clear">Clear All</button>
+
+          <div class="map-sep" aria-hidden="true"></div>
+
+          <div class="map-tool-group">
+            <label class="map-tool-lbl" for="map-name-input">Name</label>
+            <input class="map-dim-input" style="width:110px" type="text" id="map-name-input"
+                   value="town_spawn" aria-label="Map name (used as filename)">
+          </div>
+          <div class="map-tool-group">
+            <label class="map-tool-lbl" for="map-spawn-x">Spawn X</label>
+            <input class="map-dim-input" type="number" id="map-spawn-x"
+                   value="1" min="0" max="63" aria-label="Player spawn X tile">
+          </div>
+          <div class="map-tool-group">
+            <label class="map-tool-lbl" for="map-spawn-z">Spawn Z</label>
+            <input class="map-dim-input" type="number" id="map-spawn-z"
+                   value="1" min="0" max="63" aria-label="Player spawn Z tile">
+          </div>
+
+          <button class="map-btn" id="map-btn-download">↓ Download JSON</button>
+        </div>
+
+        <div id="map-canvas-wrap">
+          <canvas id="map-canvas"></canvas>
+        </div>
+
+      </div><!-- end #map-editor -->
+
     </main>
 
-    <!-- ── Right: Curation ───────────────────────────────────────────────── -->
+    <!-- ── Right: Curation / Collections ───────────────────────────────── -->
     <aside class="pane" id="pane-curation" aria-label="Curation panel">
-      <div class="pane-hdr" role="heading" aria-level="2">Curation</div>
+
+      <div class="pane-hdr" id="right-tabs-hdr" role="tablist" aria-label="Right panel mode">
+        <button class="rtab active" role="tab" data-rtab="curation" id="rtab-curation"
+                aria-selected="true">Curation</button>
+        <button class="rtab" role="tab" data-rtab="collections" id="rtab-collections"
+                aria-selected="false">Collections</button>
+      </div>
+
+      <!-- ── Curation panel ────────────────────────────────────────────────── -->
+      <div id="right-curation-panel">
+
+      <div class="pane-hdr" id="curation-mode-hdr" role="tablist" aria-label="Curation mode">
+        <button class="ctab active" role="tab" data-ctab="manual" id="ctab-manual"
+                aria-selected="true">Manual</button>
+        <button class="ctab" role="tab" data-ctab="slicer" id="ctab-slicer"
+                aria-selected="false">Batch Slice</button>
+      </div>
+
+      <div id="curation-manual-section">
+
+      <!-- Astonia quick-process bar — visible only when exactly 360 frames are loaded -->
+      <div id="astonia-quick-bar" hidden>
+        <div id="astonia-bar-top">
+          <span id="astonia-badge">⚡ Astonia</span>
+          <span id="astonia-frame-count">360 frames detected</span>
+        </div>
+        <div id="astonia-bar-row">
+          <input class="cf-input" type="text" id="astonia-base-id"
+                 placeholder="base id  e.g. spider_npc"
+                 aria-label="Character base ID">
+          <button id="astonia-process-btn" aria-label="Slice and append all 360 animation states">
+            Process Character
+          </button>
+        </div>
+        <div id="astonia-status" aria-live="polite"></div>
+      </div>
 
       <div id="curate-form" aria-label="Add to dictionary">
 
@@ -675,6 +1113,53 @@
           + Add to Dictionary
         </button>
       </div>
+      </div><!-- end #curation-manual-section -->
+
+      <!-- ── Batch Slicer ───────────────────────────────────────────────────── -->
+      <div id="curation-slicer-section">
+
+        <div id="slicer-panel">
+          <div class="slicer-row">
+            <label class="slicer-label" for="slicer-base-id">Base ID</label>
+            <input class="cf-input" type="text" id="slicer-base-id"
+                   value="character" placeholder="e.g. spider_npc"
+                   style="font-size:13px;min-height:34px">
+          </div>
+
+          <div class="slicer-row">
+            <label class="slicer-label" for="slicer-dirs">Directions</label>
+            <input class="map-dim-input" type="number" id="slicer-dirs"
+                   value="8" min="1" max="64" style="width:60px">
+            <span id="slicer-dir-preview"
+                  style="font-size:11px;color:var(--text-dim);font-family:var(--font-mono);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          </div>
+
+          <div class="slicer-sep"></div>
+
+          <div class="slicer-actions-hdr">
+            <span class="slicer-actions-hdr-lbl">Actions</span>
+            <button class="slicer-btn slicer-btn-add" id="slicer-add-action">+ Add</button>
+          </div>
+
+          <div id="slicer-actions-list" role="list" aria-label="Action definitions"></div>
+
+          <button class="slicer-btn slicer-btn-generate" id="slicer-generate">
+            ⚙ Generate States
+          </button>
+        </div><!-- end #slicer-panel -->
+
+        <div id="slicer-states-wrap">
+          <div class="slicer-states-hdr">Generated States</div>
+          <select id="slicer-state-select" aria-label="Select generated state to preview">
+            <option disabled selected>— generate first —</option>
+          </select>
+          <div id="slicer-stats"></div>
+          <button class="slicer-btn slicer-btn-append" id="slicer-append">
+            ↓ Append to Dictionary
+          </button>
+        </div>
+
+      </div><!-- end #curation-slicer-section -->
 
       <div class="pane-hdr" role="heading" aria-level="2">
         Dictionary
@@ -695,7 +1180,67 @@
           <button class="ca-btn ca-clear" id="curate-clear"
                   aria-label="Clear all curated items">Clear All</button>
         </div>
+        <div class="curate-actions">
+          <button class="ca-btn ca-anim-export" id="curate-anim-export"
+                  aria-label="Download animation dictionary JSON for the game engine"
+                  style="color:var(--purple);border-color:rgba(167,139,250,0.35)">
+            ↓ Anim Dict
+          </button>
+          <button class="ca-btn" id="curate-pack-btn"
+                  aria-label="Download character pack zip (JSON + all sprite files)"
+                  style="color:var(--green);border-color:rgba(52,211,153,0.35)">
+            ↓ Character Pack
+          </button>
+        </div>
       </div>
+
+      </div><!-- end #right-curation-panel -->
+
+      <!-- ── Collections panel ─────────────────────────────────────────────── -->
+      <div id="right-collections-panel">
+
+        <div id="coll-sel-bar">
+          <span id="coll-sel-count">0 selected</span>
+          <button class="coll-ghost-btn" id="coll-sel-clear"
+                  aria-label="Clear multi-selection">Clear</button>
+        </div>
+
+        <div id="coll-form">
+          <div class="cf-row">
+            <label class="cf-label" for="coll-name-input">Name</label>
+            <input class="cf-input" type="text" id="coll-name-input"
+                   placeholder="e.g. player_walk" autocomplete="off">
+          </div>
+          <div class="cf-row">
+            <label class="cf-label" for="coll-type-select">Type</label>
+            <select class="cf-select" id="coll-type-select" aria-label="Collection type">
+              <option value="animation">Animation</option>
+              <option value="tilemap">Tilemap Palette</option>
+              <option value="prop">Prop</option>
+            </select>
+          </div>
+          <button id="coll-create-btn" disabled aria-disabled="true">
+            + Create Collection
+          </button>
+        </div>
+
+        <div class="pane-hdr" role="heading" aria-level="2">
+          My Collections
+          <span class="badge" id="coll-count" aria-label="collection count">0</span>
+        </div>
+
+        <div id="coll-list" role="list" aria-label="Collections">
+          <div class="cl-empty">No collections yet.</div>
+        </div>
+
+        <div id="coll-export-wrap">
+          <button class="ca-btn ca-export" id="coll-export-btn"
+                  aria-label="Export all collections as asset-manifest.json">
+            ↓ Export Manifest
+          </button>
+        </div>
+
+      </div><!-- end #right-collections-panel -->
 
     </aside>
 

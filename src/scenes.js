@@ -41,6 +41,6 @@ export const SCENES = {
   world_1:    { label: 'Dungeon Room',   grid: WORLDS[1], spawn: { x: 2, z: 2 } },
   world_2:    { label: 'Maze Corridor',  grid: WORLDS[2], spawn: { x: 2, z: 2 } },
   world_3:    { label: 'Asset Showcase', grid: WORLDS[3], spawn: { x: 2, z: 2 } },
-  town_spawn: { label: 'Town Spawn',     grid: TOWN_SPAWN, spawn: { x: 5, z: 4 } },
+  town_spawn: { label: 'Town Spawn',     grid: TOWN_SPAWN, spawn: { x: 5, z: 4 }, mapFile: 'town_spawn' },
   empty_test: { label: 'Empty Test',     grid: EMPTY_TEST, spawn: { x: 3, z: 3 } },
 };
