@@ -40,11 +40,18 @@ const WORLD_2 = [
 export const WORLDS = [null, WORLD_1, WORLD_2];
 
 export class LevelManager {
-  constructor(scene) {
-    this.scene = scene;
-    this.grid = [];      // grid[z][x] = TILE value
-    this.meshMap = new Map(); // "x,z" → { mesh, type }
+  /**
+   * @param {THREE.Scene} scene
+   * @param {{ floor: THREE.Texture, wall: THREE.Texture }} textures
+   *   Pre-loaded pixel textures.  Pass null/omit to use greybox only.
+   */
+  constructor(scene, textures = {}) {
+    this.scene   = scene;
+    this.grid    = [];      // grid[z][x] = TILE value
+    this.meshMap = new Map(); // "x,z" → { mesh, type, greyMat, texMat }
     this.currentWorld = 0;
+    this.textures = textures; // { floor, wall }
+    this.textured = false;    // current view mode
   }
 
   loadWorld(n) {
@@ -81,13 +88,27 @@ export class LevelManager {
   }
 
   clearGrid() {
-    for (const { mesh } of this.meshMap.values()) {
+    for (const { mesh, greyMat, texMat } of this.meshMap.values()) {
       this.scene.remove(mesh);
       mesh.geometry.dispose();
-      mesh.material.dispose();
+      greyMat.dispose();
+      texMat.dispose();
+      // NOTE: shared Texture objects (floorTex / wallTex) are intentionally
+      // NOT disposed here — they are reused across every tile instance.
     }
     this.meshMap.clear();
     this.grid = [];
+  }
+
+  /**
+   * Swap every spawned mesh between the flat greybox material and the
+   * pixel-art textured material.  Safe to call repeatedly.
+   */
+  setTextured(enabled) {
+    this.textured = enabled;
+    for (const { mesh, greyMat, texMat } of this.meshMap.values()) {
+      mesh.material = enabled ? texMat : greyMat;
+    }
   }
 
   isWall(x, z) {
@@ -116,25 +137,39 @@ export class LevelManager {
   // ── Private ────────────────────────────────────────────────────────────────
 
   _createFloor(x, z) {
-    const geo = new THREE.PlaneGeometry(1, 1);
-    const mat = new THREE.MeshLambertMaterial({ color: 0x2a2a3e, side: THREE.DoubleSide });
-    const mesh = new THREE.Mesh(geo, mat);
+    const geo     = new THREE.PlaneGeometry(1, 1);
+    const greyMat = new THREE.MeshLambertMaterial({
+      color: 0x2a2a3e,
+      side:  THREE.DoubleSide,
+    });
+    const texMat  = new THREE.MeshStandardMaterial({
+      map:       this.textures.floor ?? null,
+      side:      THREE.DoubleSide,
+      roughness: 1,
+      metalness: 0,
+    });
+    const mesh = new THREE.Mesh(geo, this.textured ? texMat : greyMat);
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.set(x, 0, z);
     mesh.receiveShadow = true;
     this.scene.add(mesh);
-    this.meshMap.set(`${x},${z}`, { mesh, type: TILE.FLOOR });
+    this.meshMap.set(`${x},${z}`, { mesh, type: TILE.FLOOR, greyMat, texMat });
   }
 
   _createWall(x, z) {
-    const geo = new THREE.BoxGeometry(1, 1.5, 1);
-    const mat = new THREE.MeshLambertMaterial({ color: 0x52527a });
-    const mesh = new THREE.Mesh(geo, mat);
+    const geo     = new THREE.BoxGeometry(1, 1.5, 1);
+    const greyMat = new THREE.MeshLambertMaterial({ color: 0x52527a });
+    const texMat  = new THREE.MeshStandardMaterial({
+      map:       this.textures.wall ?? null,
+      roughness: 0.9,
+      metalness: 0,
+    });
+    const mesh = new THREE.Mesh(geo, this.textured ? texMat : greyMat);
     mesh.position.set(x, 0.75, z);
-    mesh.castShadow = true;
+    mesh.castShadow    = true;
     mesh.receiveShadow = true;
     this.scene.add(mesh);
-    this.meshMap.set(`${x},${z}`, { mesh, type: TILE.WALL });
+    this.meshMap.set(`${x},${z}`, { mesh, type: TILE.WALL, greyMat, texMat });
   }
 
   _removeMesh(key) {
@@ -142,7 +177,8 @@ export class LevelManager {
     if (!entry) return;
     this.scene.remove(entry.mesh);
     entry.mesh.geometry.dispose();
-    entry.mesh.material.dispose();
+    entry.greyMat.dispose();
+    entry.texMat.dispose();
     this.meshMap.delete(key);
   }
 

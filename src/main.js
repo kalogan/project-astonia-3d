@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { LevelManager } from './LevelManager.js';
 import { LightingManager, MODE } from './lighting.js';
+import { floorTex, wallTex } from './textures.js';
 import './style.css';
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
@@ -44,7 +45,7 @@ player.castShadow = true;
 scene.add(player);
 
 // ── Level & Lighting ──────────────────────────────────────────────────────────
-const levelManager = new LevelManager(scene);
+const levelManager = new LevelManager(scene, { floor: floorTex, wall: wallTex });
 levelManager.loadWorld(1);
 
 const lighting = new LightingManager(scene, levelManager);
@@ -178,6 +179,17 @@ devPanel.innerHTML = `
       <option value="dark">Dark</option>
     </select>
   </div>
+  <div class="dt-divider"></div>
+  <div class="dt-section">TILESETS</div>
+  <div class="btn-group">
+    <button id="btn-tex">
+      <span class="btn-key">T</span>Toggle Textures
+    </button>
+  </div>
+  <div class="stat-row">
+    <span class="stat-label">VIEW</span>
+    <span id="tex-mode" class="tex-badge greybox">GREYBOX</span>
+  </div>
   <div class="dt-hint">WASD · move &nbsp;|&nbsp; ↑↓←→ · attack</div>
 `;
 
@@ -238,6 +250,17 @@ $id('lighting-preset').addEventListener('change', e => {
   applyPreset(e.target.value);
 });
 
+// ── Texture Toggle ────────────────────────────────────────────────────────────
+let texturedMode = false;
+
+$id('btn-tex').addEventListener('click', () => {
+  texturedMode = !texturedMode;
+  levelManager.setTextured(texturedMode);
+  const badge = $id('tex-mode');
+  badge.textContent = texturedMode ? 'TEXTURED' : 'GREYBOX';
+  badge.className   = 'tex-badge ' + (texturedMode ? 'textured' : 'greybox');
+});
+
 function refreshBadge() {
   const badge = $id('dt-badge');
   const isFov = lighting.mode === MODE.FOV;
@@ -249,6 +272,7 @@ function refreshBadge() {
 window.addEventListener('keydown', e => {
   if (e.code === 'KeyL') $id('btn-light').click();
   if (e.code === 'KeyX') $id('btn-switch').click();
+  if (e.code === 'KeyT') $id('btn-tex').click();
 });
 
 function updateDevUI() {

@@ -137,6 +137,37 @@ html, body {
   letter-spacing: 0.3px;
 }
 
+/* ── Tileset Section ─────────────────────────────────────────────────────── */
+.dt-section {
+  color: #44446a;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 7px;
+}
+
+.tex-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  line-height: 16px;
+}
+
+.tex-badge.greybox {
+  background: rgba(50, 50, 90, 0.4);
+  color: #7777bb;
+  border: 1px solid rgba(80, 80, 140, 0.35);
+}
+
+.tex-badge.textured {
+  background: rgba(80, 50, 0, 0.5);
+  color: #ffaa33;
+  border: 1px solid rgba(180, 110, 0, 0.38);
+}
+
 /* ── Mode Badges ─────────────────────────────────────────────────────────── */
 .mode-badge {
   display: inline-block;
