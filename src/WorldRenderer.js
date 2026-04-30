@@ -155,10 +155,17 @@ export class WorldRenderer {
   //   wall:   taller block, sits at y=0.5
   //   entity: character/prop height, sits at y=0.5
 
+  // Isometric scale derivation — camera sits at equal (20,20,20) offset (true iso):
+  //   cell screen-width  = √2   ≈ 1.414 world units  (horizontal diamond diagonal)
+  //   cell screen-height = 2/√6 ≈ 0.816 world units  (vertical diamond diagonal)
+  //   1 world-Y unit = 2/√6 ≈ 0.816 screen-up units
+  //
+  // Wall: floor-height + 1-unit face = 2 × 0.816 = 1.633.
+  // Wall y=0.8 → bottom at 0.8×0.816 − 1.633/2 ≈ 0, flush with the floor plane.
   static SPRITE_TYPE = {
-    floor:  { sx: 1.4, sy: 1.4, y: 0,   bias: 0  },
-    wall:   { sx: 1.4, sy: 2.0, y: 0.5, bias: 10 },
-    entity: { sx: 1.0, sy: 1.8, y: 0.5, bias: 50 },
+    floor:  { sx: 1.414, sy: 0.816, y: 0.00, bias: 0  },
+    wall:   { sx: 1.414, sy: 1.633, y: 0.80, bias: 10 },
+    entity: { sx: 1.000, sy: 1.800, y: 0.50, bias: 50 },
   };
 
   _render2DWorld() {
@@ -278,17 +285,28 @@ export class WorldRenderer {
     return tex;
   }
 
-  // Draw a solid-colour 64×64 canvas with an optional 2px inset border.
+  // Draw a 64×64 isometric diamond fallback texture.
+  // Corners sit at the mid-point of each canvas edge; 1px stroke stays inset.
   _makeFallbackCanvas(fill, border = null, size = 64) {
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
-    const ctx = canvas.getContext('2d');
+    const ctx    = canvas.getContext('2d');
+    const cx = size / 2, cy = size / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx,      1);        // top
+    ctx.lineTo(size-1,  cy);       // right
+    ctx.lineTo(cx,      size-1);   // bottom
+    ctx.lineTo(1,       cy);       // left
+    ctx.closePath();
+
     ctx.fillStyle = fill;
-    ctx.fillRect(0, 0, size, size);
+    ctx.fill();
+
     if (border) {
       ctx.strokeStyle = border;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(1, 1, size - 2, size - 2);
+      ctx.lineWidth   = 1;
+      ctx.stroke();
     }
     return canvas;
   }

@@ -11,10 +11,11 @@ export const TILE = { EMPTY: 0, FLOOR: 1, WALL: 2 };
 // Add entries here as you expand your tileset — IDs are arbitrary positive ints.
 export const tileDictionary = {
   // fallback.fill / fallback.border are used when the PNG is missing (404).
+  // Colors match the 3D greybox palette so the 2D layout reads identically.
   // Remove the fallback key once your real assets are in /public.
-  1: { type: 'floor',  src: '/00031530.png', fallback: { fill: '#444444', border: '#666666' } },
-  2: { type: 'floor',  src: '/00031531.png', fallback: { fill: '#228B22', border: '#145214' } },
-  3: { type: 'entity', src: '/00031377.png', fallback: { fill: '#FFA500' } },
+  1: { type: 'floor',  src: '/00031530.png', fallback: { fill: '#2c2e3b', border: '#424451' } },
+  2: { type: 'floor',  src: '/00031531.png', fallback: { fill: '#1a1c23', border: '#303239' } },
+  3: { type: 'entity', src: '/00031377.png', fallback: { fill: '#FFA500', border: '#FFB733' } },
 };
 
 // World 1 — Dungeon room with scattered interior walls (12 × 12)

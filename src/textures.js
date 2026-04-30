@@ -16,19 +16,30 @@ import * as THREE from 'three';
 const loader = new THREE.TextureLoader();
 
 /**
- * Draw a solid-colour 64×64 canvas with an optional 2px border.
+ * Draw a 64×64 isometric diamond (top/right/bottom/left mid-points of the canvas).
  * Used as a fallback image when a texture URL returns 404.
+ * The 1px border is inset so the stroke stays within canvas bounds.
  */
 export function makeColorCanvas(fill, border = null, size = 64) {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
+  const ctx    = canvas.getContext('2d');
+  const cx = size / 2, cy = size / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(cx,      1);        // top
+  ctx.lineTo(size-1,  cy);       // right
+  ctx.lineTo(cx,      size-1);   // bottom
+  ctx.lineTo(1,       cy);       // left
+  ctx.closePath();
+
   ctx.fillStyle = fill;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fill();
+
   if (border) {
     ctx.strokeStyle = border;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, size - 2, size - 2);
+    ctx.lineWidth   = 1;
+    ctx.stroke();
   }
   return canvas;
 }
@@ -69,7 +80,8 @@ export const floorSpriteTex  = loadPixelTexture('/textures/floor_sprite.png');
 export const wallSpriteTex   = loadPixelTexture('/textures/wall_sprite.png');
 export const playerSpriteTex = (() => {
   const tex = loadPixelTexture('/textures/player_sprite.png', () => {
-    tex.image = makeColorCanvas('#BF00FF');
+    // #ff4500 matches the 3D player mesh color for visual consistency.
+    tex.image = makeColorCanvas('#ff4500', '#ff6a00');
     tex.needsUpdate = true;
   });
   return tex;
