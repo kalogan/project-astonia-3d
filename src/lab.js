@@ -1,32 +1,25 @@
-// ── Asset index via Vite glob ──────────────────────────────────────────────────
-// Keys are like '/public/raw-assets/FOLDER/file.png'.
-// Served URL = key with '/public' stripped → '/raw-assets/FOLDER/file.png'.
-// We only use the keys for enumeration — no lazy import calls needed.
-const GLOB = import.meta.glob('/public/raw-assets/**/*.png', { eager: false });
+import JSZip from 'jszip';
 
-const PREFIX   = '/public/raw-assets/';
-const folderMap = new Map(); // folderName → [{ filename, url }]
+// ── Zip index ──────────────────────────────────────────────────────────────────
+// Built by parsing assets_01.zip and assets_02.zip on boot.
+// Maps  folderName → [{ filename, fullPath, zip }]
+// The JSZip instances stay alive in memory so folder selection only needs
+// in-process decompression — no further network requests after boot.
+const zipIndex  = new Map();
 
-for (const key of Object.keys(GLOB)) {
-  const rel    = key.slice(PREFIX.length);
-  const slash  = rel.indexOf('/');
-  const folder = slash === -1 ? '(root)' : rel.slice(0, slash);
-  const fname  = slash === -1 ? rel : rel.slice(slash + 1);
-  const url    = key.slice('/public'.length);   // '/raw-assets/...'
-  if (!folderMap.has(folder)) folderMap.set(folder, []);
-  folderMap.get(folder).push({ filename: fname, url });
-}
-for (const files of folderMap.values()) {
-  files.sort((a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true }));
-}
-const allFolders = [...folderMap.keys()].sort();
+// folderMap: folderName → [{ filename, url, blobUrl }]
+// url     = canonical /raw-assets/FOLDER/FILE.png  (permanent, used for curation)
+// blobUrl = URL.createObjectURL blob               (ephemeral, revoked on switch)
+const folderMap = new Map();
+let allFolders  = [];
 
 // ── Persistent state ───────────────────────────────────────────────────────────
 let curated = JSON.parse(localStorage.getItem('lab-curated') ?? '{}');
 
 // ── Runtime state ──────────────────────────────────────────────────────────────
-let activeFolder  = null;
-let selectedEntry = null;   // { filename, url }
+let activeFolder   = null;
+let selectedEntry  = null;
+let activeBlobUrls = [];  // revoked when the user switches folders
 
 let flipFiles   = [];
 let flipIdx     = 0;
@@ -34,14 +27,180 @@ let flipFps     = 12;
 let flipPlaying = true;
 let flipTimer   = null;
 
-let gridObserver = null;
-
 // ── DOM shorthand ──────────────────────────────────────────────────────────────
 const $  = id  => document.getElementById(id);
 const $$ = sel => document.querySelectorAll(sel);
 
 // ── Boot ───────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => { loadAssetPacks(); });
+
+// ── Loading UI helpers ─────────────────────────────────────────────────────────
+
+function setStatus(msg, isError = false) {
+  const el = $('ld-status');
+  el.textContent = msg;
+  el.classList.toggle('error', isError);
+}
+
+function updateBar(idx, received, total) {
+  const fill = $(`ld-fill-${idx + 1}`);
+  const pct  = $(`ld-pct-${idx + 1}`);
+  const prog = $(`ld-prog-${idx + 1}`);
+
+  if (total > 0) {
+    const pctVal = Math.min(100, Math.round(received / total * 100));
+    fill.classList.remove('indeterminate');
+    fill.style.width = `${pctVal}%`;
+    pct.textContent  = `${pctVal}%`;
+    prog.setAttribute('aria-valuenow', pctVal);
+  } else {
+    // Content-Length header absent — show shimmer + bytes received
+    fill.classList.add('indeterminate');
+    pct.textContent = received > 0
+      ? `${(received / 1_048_576).toFixed(1)} MB`
+      : '—';
+  }
+}
+
+function hideOverlay() {
+  const el = $('lab-loading');
+  el.classList.add('done');
+  el.addEventListener('transitionend', () => { el.hidden = true; }, { once: true });
+}
+
+// ── Streaming fetch with per-file progress ─────────────────────────────────────
+// Streams the response body for live progress, then assembles via Blob.arrayBuffer()
+// which is more reliable than manual Uint8Array copy for large binary payloads.
+async function fetchWithProgress(url, barIdx) {
+  const res = await fetch(url);
+
+  const contentType = res.headers.get('content-type') ?? '';
+  console.log(`[lab] ${url} → HTTP ${res.status}  Content-Type: ${contentType}`);
+
+  if (!res.ok) {
+    throw new Error(`"${url}" not found — HTTP ${res.status}`);
+  }
+  if (contentType.includes('text/html')) {
+    throw new Error(`"${url}" returned an HTML page instead of a zip file — the path is incorrect`);
+  }
+
+  const total  = parseInt(res.headers.get('content-length') || '0', 10);
+  const reader = res.body.getReader();
+  const chunks = [];
+  let received = 0;
+
+  updateBar(barIdx, 0, total);
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.byteLength;
+    updateBar(barIdx, received, total);
+  }
+
+  updateBar(barIdx, received, received || 1);
+
+  // Blob handles binary concatenation natively — avoids off-by-one errors in
+  // manual Uint8Array assembly that can silently corrupt the zip end-of-central-dir.
+  return new Blob(chunks).arrayBuffer();
+}
+
+// ── Parse a JSZip instance into a folder → entries map ────────────────────────
+// Expected zip structure:  FOLDERNAME/filename.png
+// Files at the root level (no slash in path) are skipped.
+function indexZip(zip) {
+  const map = new Map();
+
+  for (const [filePath, entry] of Object.entries(zip.files)) {
+    if (entry.dir) continue;
+    if (!filePath.toLowerCase().endsWith('.png')) continue;
+
+    const slash  = filePath.indexOf('/');
+    if (slash === -1) continue;               // root-level file — skip
+
+    const folder = filePath.slice(0, slash);
+    const fname  = filePath.slice(slash + 1);
+    if (!fname) continue;                     // bare directory path — skip
+
+    if (!map.has(folder)) map.set(folder, []);
+    map.get(folder).push({ filename: fname, fullPath: filePath, zip });
+  }
+
+  return map;
+}
+
+// ── Main boot: download both zips in parallel, merge, then start the UI ───────
+async function loadAssetPacks() {
+  try {
+    setStatus('Downloading asset packs…');
+
+    // Fetch both zip files simultaneously — bars update independently as bytes arrive
+    const [buf1, buf2] = await Promise.all([
+      fetchWithProgress('/raw-assets/assets_01.zip', 0),
+      fetchWithProgress('/raw-assets/assets_02.zip', 1),
+    ]);
+
+    setStatus('Parsing assets_01.zip…');
+    let zip1;
+    try {
+      zip1 = await JSZip.loadAsync(buf1);
+    } catch (e) {
+      throw new Error(`assets_01.zip — invalid zip: ${e.message}`);
+    }
+
+    setStatus('Parsing assets_02.zip…');
+    let zip2;
+    try {
+      zip2 = await JSZip.loadAsync(buf2);
+    } catch (e) {
+      throw new Error(`assets_02.zip — invalid zip: ${e.message}`);
+    }
+
+    setStatus('Merging folders…');
+
+    // Index each zip then merge — folders that appear in both archives are combined
+    for (const [folder, entries] of indexZip(zip1)) {
+      zipIndex.set(folder, entries);
+    }
+    for (const [folder, entries] of indexZip(zip2)) {
+      if (zipIndex.has(folder)) {
+        zipIndex.get(folder).push(...entries);
+      } else {
+        zipIndex.set(folder, [...entries]);
+      }
+    }
+
+    // Sort files within every folder by numeric filename
+    for (const entries of zipIndex.values()) {
+      entries.sort((a, b) =>
+        a.filename.localeCompare(b.filename, undefined, { numeric: true }));
+    }
+
+    // Build folderMap: canonical URLs only — blob URLs are created on folder select
+    for (const [folder, entries] of zipIndex) {
+      folderMap.set(folder, entries.map(({ filename }) => ({
+        filename,
+        url:    `/raw-assets/${folder}/${filename}`,
+        blobUrl: null,
+      })));
+    }
+    allFolders = [...folderMap.keys()].sort();
+
+    const total = [...folderMap.values()].reduce((s, f) => s + f.length, 0);
+    setStatus(`${allFolders.length} folders · ${total.toLocaleString()} sprites ready`);
+
+    hideOverlay();
+    bootUI();
+
+  } catch (err) {
+    console.error('[lab] Failed to load asset packs:', err);
+    setStatus(`Error: ${err.message}`, true);
+  }
+}
+
+// ── UI boot (runs after zips are merged) ──────────────────────────────────────
+function bootUI() {
   const totalFiles = [...folderMap.values()].reduce((s, f) => s + f.length, 0);
   $('lab-stats').textContent =
     `${allFolders.length} folders · ${totalFiles.toLocaleString()} sprites`;
@@ -50,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buildFolderList(allFolders);
   renderCuratedList();
   bindEvents();
-});
+}
 
 // ── Left pane: folder list ─────────────────────────────────────────────────────
 function buildFolderList(names) {
@@ -58,10 +217,10 @@ function buildFolderList(names) {
   list.innerHTML = '';
   const frag = document.createDocumentFragment();
   for (const name of names) {
-    const count   = folderMap.get(name)?.length ?? 0;
+    const count    = folderMap.get(name)?.length ?? 0;
     const isActive = name === activeFolder;
-    const div     = document.createElement('div');
-    div.className    = 'folder-item' + (isActive ? ' active' : '');
+    const div      = document.createElement('div');
+    div.className      = 'folder-item' + (isActive ? ' active' : '');
     div.dataset.folder = name;
     div.setAttribute('role', 'listitem');
     div.setAttribute('tabindex', '0');
@@ -79,7 +238,12 @@ function buildFolderList(names) {
   list.appendChild(frag);
 }
 
-function selectFolder(name) {
+// ── Folder selection — extract from in-memory zip (no network request) ────────
+async function selectFolder(name) {
+  // Release the previous folder's blob URLs before we lose the references
+  for (const u of activeBlobUrls) URL.revokeObjectURL(u);
+  activeBlobUrls = [];
+
   activeFolder = name;
   $$('.folder-item').forEach(el => {
     const on = el.dataset.folder === name;
@@ -87,10 +251,35 @@ function selectFolder(name) {
     el.setAttribute('aria-selected', on);
   });
 
-  const files = folderMap.get(name) ?? [];
-  $('flip-folder-name').textContent = `${name}  (${files.length})`;
-  startFlipbook(files);
-  buildGrid(files);
+  $('flip-folder-name').textContent = `${name}  (extracting…)`;
+  startFlipbook([]);
+  buildGrid([]);
+
+  try {
+    const indexEntries = zipIndex.get(name) ?? [];
+
+    // Decompress each PNG from the in-memory JSZip instance and create a blob URL
+    const files = await Promise.all(indexEntries.map(async ({ filename, fullPath, zip }) => {
+      const blob   = await zip.files[fullPath].async('blob');
+      const blobUrl = URL.createObjectURL(blob);
+      activeBlobUrls.push(blobUrl);
+      return {
+        filename,
+        url:    `/raw-assets/${name}/${filename}`,  // canonical — for curation
+        blobUrl,                                     // ephemeral — for display
+      };
+    }));
+
+    folderMap.set(name, files);
+    $('flip-folder-name').textContent = `${name}  (${files.length})`;
+    startFlipbook(files);
+    buildGrid(files);
+
+  } catch (err) {
+    console.error(`[lab] Failed to extract folder ${name}:`, err);
+    $('flip-folder-name').textContent = `${name}  (error)`;
+    buildGrid([]);
+  }
 }
 
 // ── Center pane: flipbook ──────────────────────────────────────────────────────
@@ -108,16 +297,16 @@ function renderFlipFrame() {
   const fname   = $('flip-filename');
 
   if (!flipFiles.length) {
-    img.style.display = 'none';
+    img.style.display   = 'none';
     empty.style.display = '';
     counter.textContent = '';
     fname.textContent   = '';
     return;
   }
   const entry = flipFiles[flipIdx];
-  img.src = entry.url;
-  img.alt = entry.filename;
-  img.style.display = 'block';
+  img.src             = entry.blobUrl ?? entry.url;
+  img.alt             = entry.filename;
+  img.style.display   = 'block';
   empty.style.display = 'none';
   counter.textContent = `${flipIdx + 1} / ${flipFiles.length}`;
   fname.textContent   = entry.filename;
@@ -133,55 +322,43 @@ function restartFlipTimer() {
 }
 
 // ── Center pane: sprite grid ───────────────────────────────────────────────────
+// All images are already in memory as blob URLs after zip extraction, so
+// IntersectionObserver lazy-loading is unnecessary. Native img.loading="lazy"
+// defers off-screen decode/paint without extra JS overhead.
 function buildGrid(files) {
   const grid = $('sprite-grid');
   grid.innerHTML = '';
-
-  if (gridObserver) {
-    gridObserver.disconnect();
-    gridObserver = null;
-  }
 
   if (!files.length) {
     grid.innerHTML = '<div id="grid-empty">This folder is empty.</div>';
     return;
   }
 
-  gridObserver = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const cell = entry.target;
-      if (cell.dataset.url && !cell.querySelector('img')) {
-        const img = document.createElement('img');
-        img.src = cell.dataset.url;
-        img.alt = cell.dataset.filename ?? '';
-        cell.appendChild(img);
-      }
-      gridObserver.unobserve(cell);
-    }
-  }, { root: $('grid-wrap'), rootMargin: '300px' });
-
   const frag = document.createDocumentFragment();
   for (const f of files) {
     const cell = document.createElement('div');
-    cell.className = 'grid-cell' + (isCurated(f.url) ? ' curated' : '');
-    cell.dataset.url      = f.url;
+    cell.className        = 'grid-cell' + (isCurated(f.url) ? ' curated' : '');
+    cell.dataset.url      = f.url;       // canonical — for curation checks
     cell.dataset.filename = f.filename;
-    cell.title = f.filename;
+    cell.title            = f.filename;
     cell.setAttribute('role', 'listitem');
     cell.setAttribute('tabindex', '0');
     cell.setAttribute('aria-label', f.filename);
+
+    const img   = document.createElement('img');
+    img.src     = f.blobUrl ?? f.url;
+    img.alt     = f.filename;
+    img.loading = 'lazy';
+    cell.appendChild(img);
+
     const activate = () => selectSprite(f);
     cell.addEventListener('click', activate);
     cell.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
     });
     frag.appendChild(cell);
-    gridObserver.observe(cell);
   }
   grid.appendChild(frag);
-
-  // Reset scroll
   $('grid-wrap').scrollTop = 0;
 }
 
@@ -193,27 +370,22 @@ function isCurated(url) {
 function selectSprite(entry) {
   selectedEntry = entry;
 
-  // Highlight in grid
   $$('.grid-cell').forEach(el =>
     el.classList.toggle('selected', el.dataset.url === entry.url));
 
-  // Jump flipbook to this frame
   const idx = flipFiles.findIndex(f => f.url === entry.url);
   if (idx !== -1) { flipIdx = idx; renderFlipFrame(); }
 
-  // Update curation form
   $('curate-filename').textContent = entry.filename;
   $('curate-filename').classList.add('has-file');
   $('curate-name').value = entry.filename.replace(/\.[^.]+$/, '');
 
-  // Thumbnail
   const thumb = $('curate-thumb');
   thumb.innerHTML = '';
   const img = document.createElement('img');
-  img.src = entry.url;
+  img.src = entry.blobUrl ?? entry.url;
   thumb.appendChild(img);
 
-  // Auto-suggest next free ID
   const usedIds = Object.keys(curated).map(Number);
   $('curate-id').value = usedIds.length ? Math.max(...usedIds) + 1 : 1;
   const addBtn = $('curate-add');
@@ -222,6 +394,8 @@ function selectSprite(entry) {
 }
 
 // ── Right pane: curation ───────────────────────────────────────────────────────
+// Always stores canonical entry.url — not blob URLs, which are session-ephemeral
+// and revoked when the user switches folders.
 function addToDict() {
   if (!selectedEntry) return;
   const id  = parseInt($('curate-id').value, 10);
@@ -240,12 +414,10 @@ function addToDict() {
   saveCurated();
   renderCuratedList();
 
-  // Mark cell as curated
   $$('.grid-cell').forEach(el => {
     if (el.dataset.url === selectedEntry.url) el.classList.add('curated');
   });
 
-  // Advance ID
   $('curate-id').value = id + 1;
 }
 
@@ -341,13 +513,11 @@ function copyConfig() {
 
 // ── Event bindings ─────────────────────────────────────────────────────────────
 function bindEvents() {
-  // Search
   $('lib-search').addEventListener('input', e => {
     const q = e.target.value.trim().toLowerCase();
     buildFolderList(q ? allFolders.filter(n => n.toLowerCase().includes(q)) : allFolders);
   });
 
-  // Flipbook controls
   $('flip-fps').addEventListener('input', e => {
     flipFps = parseInt(e.target.value, 10);
     $('flip-fps-val').textContent = flipFps;
@@ -378,7 +548,6 @@ function bindEvents() {
     renderFlipFrame();
   });
 
-  // Curation
   $('curate-add').addEventListener('click', addToDict);
   $('curate-copy').addEventListener('click', copyConfig);
   $('curate-clear').addEventListener('click', () => {
@@ -389,7 +558,6 @@ function bindEvents() {
     refreshCuratedBadges();
   });
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'ArrowLeft')  { $('flip-prev').click(); e.preventDefault(); }

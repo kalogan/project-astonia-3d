@@ -38,6 +38,9 @@ export const tileDictionary = {
        floorBase: 1,
        mesh3d: { shape: 'cylinder', color: 0x245e24, r: 0.25, h: 1.8, oy: 0.9 },
        fallback: { fill: '#245e24', border: '#347e34' } },
+  8: { type: 'wall',  src: getSpritePath('tiles', 'wall_stone_00.png'),
+       mesh3d: { shape: 'box', color: 0x3a3a4a, w: 1.0, h: 1.0, d: 1.0, oy: 0.5 },
+       fallback: { fill: '#2a2a3a', border: '#4a4a6a' } },
 };
 
 // World 1 — Dungeon room with scattered interior walls (12 × 12)
@@ -118,7 +121,20 @@ export class LevelManager {
   isWall(x, z) {
     const row = this.grid[z];
     if (!row) return false;
-    return row[x] === TILE.WALL;
+    const cell = row[x];
+    if (cell === TILE.WALL) return true;
+    // Also block on tileDictionary entries typed as 'wall' (e.g. dict ID 8).
+    return tileDictionary[cell]?.type === 'wall';
+  }
+
+  /**
+   * Populate the grid from an arbitrary 2-D array (e.g. a named scene).
+   * Values may be TILE constants or tileDictionary IDs — both are valid.
+   * The source array is deep-copied so mutations here never touch the registry.
+   */
+  seedWorld(grid) {
+    this.currentWorld = 0;
+    this.grid = grid.map(row => [...row]);
   }
 
   // ── Private ────────────────────────────────────────────────────────────────

@@ -443,9 +443,131 @@
 
     .ca-btn.ca-clear { color: var(--red); border-color: rgba(248,113,113,0.25); }
     .ca-btn.ca-clear:hover { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.5); }
+
+    /* ── Loading overlay ─────────────────────────────────────────────────────── */
+    #lab-loading {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg);
+      opacity: 1;
+      transition: opacity 0.35s ease;
+    }
+    #lab-loading.done { opacity: 0; pointer-events: none; }
+
+    .ld-card {
+      width: min(480px, 90vw);
+      padding: 28px 32px 24px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex; flex-direction: column; gap: 0;
+    }
+
+    .ld-heading {
+      font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 3px; color: var(--accent);
+      text-transform: uppercase; margin-bottom: 22px;
+    }
+
+    .ld-item { margin-bottom: 16px; }
+    .ld-item:last-of-type { margin-bottom: 20px; }
+
+    .ld-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 7px;
+    }
+    .ld-name {
+      font-family: var(--font-mono); font-size: 13px; color: var(--text);
+    }
+    .ld-pct {
+      font-size: 13px; font-weight: 700; color: var(--amber);
+      font-variant-numeric: tabular-nums; min-width: 48px; text-align: right;
+    }
+
+    /* Track */
+    .ld-track {
+      height: 10px;
+      background: #0d1018;
+      border: 1px solid #1e2738;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    /* Determinate fill — high-contrast amber with glow */
+    .ld-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #f59e0b, #fbbf24 60%, #fde68a);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+      transition: width 0.12s linear;
+    }
+
+    /* Indeterminate shimmer — used when Content-Length header is absent */
+    @keyframes ld-shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+    .ld-fill.indeterminate {
+      width: 100% !important;
+      background: linear-gradient(
+        90deg,
+        #1a1000 0%,
+        #f59e0b 35%,
+        #fbbf24 50%,
+        #f59e0b 65%,
+        #1a1000 100%
+      );
+      background-size: 200% 100%;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+      animation: ld-shimmer 1.6s linear infinite;
+    }
+
+    .ld-status {
+      font-size: 12px; color: var(--text-dim);
+      text-align: center; letter-spacing: 0.4px;
+      min-height: 18px;
+    }
+    .ld-status.error { color: var(--red); }
   </style>
 </head>
 <body>
+
+<!-- ── Loading overlay — visible until both zips are parsed ─────────────────── -->
+<div id="lab-loading" role="status" aria-live="polite" aria-label="Loading asset packs">
+  <div class="ld-card">
+    <p class="ld-heading">Loading Assets</p>
+
+    <div class="ld-item">
+      <div class="ld-row">
+        <span class="ld-name">assets_01.zip</span>
+        <span class="ld-pct" id="ld-pct-1">—</span>
+      </div>
+      <div class="ld-track" role="progressbar"
+           aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+           aria-label="assets_01.zip download progress"
+           id="ld-prog-1">
+        <div class="ld-fill" id="ld-fill-1"></div>
+      </div>
+    </div>
+
+    <div class="ld-item">
+      <div class="ld-row">
+        <span class="ld-name">assets_02.zip</span>
+        <span class="ld-pct" id="ld-pct-2">—</span>
+      </div>
+      <div class="ld-track" role="progressbar"
+           aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+           aria-label="assets_02.zip download progress"
+           id="ld-prog-2">
+        <div class="ld-fill" id="ld-fill-2"></div>
+      </div>
+    </div>
+
+    <p class="ld-status" id="ld-status">Connecting…</p>
+  </div>
+</div>
+
 <div id="app">
 
   <header id="lab-header">

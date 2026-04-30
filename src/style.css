@@ -311,7 +311,8 @@ html, body {
   margin-bottom: 9px;
 }
 
-#lighting-preset {
+#lighting-preset,
+#world-select {
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
@@ -330,18 +331,21 @@ html, body {
   transition: border-color 0.1s, color 0.1s;
 }
 
-#lighting-preset:hover {
+#lighting-preset:hover,
+#world-select:hover {
   border-color: #475569;
   color: #f8fafc;
 }
 
-#lighting-preset:focus {
+#lighting-preset:focus,
+#world-select:focus {
   border-color: #60a5fa;
   outline: 1px solid #60a5fa;
   outline-offset: -1px;
 }
 
-#lighting-preset option {
+#lighting-preset option,
+#world-select option {
   background: #0f172a;
   color: #e2e8f0;
 }

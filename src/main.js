@@ -4,6 +4,7 @@ import { WorldRenderer } from './WorldRenderer.js';
 import { LightingManager, MODE } from './lighting.js';
 import { floorTex, wallTex, floorSpriteTex, wallSpriteTex, playerSpriteTex } from './textures.js';
 import { initSlicer } from './slicer.js';
+import { SCENES } from './scenes.js';
 import './style.css';
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
@@ -172,8 +173,14 @@ function handleInput() {
 }
 
 // ── Dev Tools DOM ─────────────────────────────────────────────────────────────
-let currentWorld = 1;
+const INITIAL_SCENE = 'world_1';
 const devPanel = document.getElementById('dev-tools');
+
+// Build scene <option> list from the registry
+const sceneOptions = Object.entries(SCENES)
+  .map(([key, s]) =>
+    `<option value="${key}"${key === INITIAL_SCENE ? ' selected' : ''}>${s.label}</option>`)
+  .join('');
 
 devPanel.innerHTML = `
   <div class="dt-header">
@@ -183,7 +190,7 @@ devPanel.innerHTML = `
   <div class="dt-stats">
     <div class="stat-row"><span class="stat-label">POS</span><span id="dt-pos">—</span></div>
     <div class="stat-row"><span class="stat-label">GRID</span><span id="dt-grid">—</span></div>
-    <div class="stat-row"><span class="stat-label">WORLD</span><span id="dt-world">1</span></div>
+    <div class="stat-row"><span class="stat-label">WORLD</span><span id="dt-world">${SCENES[INITIAL_SCENE].label}</span></div>
   </div>
   <div class="dt-divider"></div>
   <div class="btn-group">
@@ -193,12 +200,14 @@ devPanel.innerHTML = `
     <button id="btn-floor"  aria-label="Spawn floor at player position (F)">
       <span class="btn-key" aria-hidden="true">F</span>Spawn Floor
     </button>
-    <button id="btn-switch" aria-label="Cycle to next world (X)">
-      <span class="btn-key" aria-hidden="true">X</span>Switch World
-    </button>
     <button id="btn-light"  aria-label="Toggle FOV / Spot lighting mode (L)" aria-pressed="false">
       <span class="btn-key" aria-hidden="true">L</span>Toggle Lighting
     </button>
+  </div>
+  <div class="dt-divider"></div>
+  <div class="preset-row">
+    <span class="stat-label">SCENE</span>
+    <select id="world-select" aria-label="Select scene">${sceneOptions}</select>
   </div>
   <div class="dt-divider"></div>
   <div class="slider-section">
@@ -276,18 +285,24 @@ $id('btn-floor').addEventListener('click', () => {
   worldRenderer.spawnFloor(gx, gz);
 });
 
-$id('btn-switch').addEventListener('click', () => {
-  // Cycle: 1 → 2 → 3 (sprite test) → 1
-  currentWorld = currentWorld === 3 ? 1 : currentWorld + 1;
-  levelManager.loadWorld(currentWorld);
+// ── Scene seeding ─────────────────────────────────────────────────────────────
+function seedScene(key) {
+  const sceneData = SCENES[key];
+  if (!sceneData) return;
+  levelManager.seedWorld(sceneData.grid);
+  // In 3D mode, translate any dict-type IDs to TILE constants before rebuilding
+  // so walls and floors resolve correctly without a manual mode-toggle.
+  if (worldRenderer.renderMode === '3D') worldRenderer.syncWorlds();
   worldRenderer.rebuild();
-  player.position.set(2, 0.5, 2);
-  $id('dt-world').textContent = currentWorld;
+  player.position.set(sceneData.spawn.x, 0.5, sceneData.spawn.z);
+  $id('dt-world').textContent = sceneData.label;
   lastGX = null;
   lastGZ = null;
   lighting.invalidateFOV();
   lighting.computeFOV(player.position);
-});
+}
+
+$id('world-select').addEventListener('change', e => seedScene(e.target.value));
 
 $id('btn-light').addEventListener('click', () => {
   lighting.toggle();
@@ -366,7 +381,6 @@ function refreshBadge() {
 // Keyboard shortcuts that mirror the panel buttons
 window.addEventListener('keydown', e => {
   if (e.code === 'KeyL') $id('btn-light').click();
-  if (e.code === 'KeyX') $id('btn-switch').click();
   if (e.code === 'KeyT') $id('btn-tex').click();
   if (e.code === 'KeyR') $id('btn-render').click();
 });
