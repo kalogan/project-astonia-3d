@@ -56,7 +56,13 @@ const playerSpriteMat = new THREE.SpriteMaterial({
   transparent: true,
 });
 const playerSprite = new THREE.Sprite(playerSpriteMat);
-playerSprite.scale.set(1.0, 1.8, 1);  // adjust to match your character sprite dimensions
+// 0.7 × floor tile width (√2 ≈ 1.414) keeps the character smaller than a tile.
+// Height is 2× the width for upright character proportions.
+const PLAYER_SPRITE_W = 0.7 * 1.414;            // ≈ 0.99
+playerSprite.scale.set(PLAYER_SPRITE_W, PLAYER_SPRITE_W * 2, 1);
+// Anchor at (0.5, 0.1) — 10% from the bottom — so the feet sit on the grid
+// intersection rather than the sprite center floating in mid-air.
+playerSprite.center.set(0.5, 0.1);
 playerSprite.visible = false;
 scene.add(playerSprite);
 
@@ -120,6 +126,9 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => keys.delete(e.code));
 
 const SPEED = 0.08;
+// Extra distance added to the wall-test point so the player's visible edge
+// stops before the wall mesh rather than clipping into it.
+const COLLISION_PADDING = 0.2;
 
 // Tracks the last grid cell the player occupied so FOV only recomputes
 // when the player crosses into a new cell, not on every sub-pixel movement.
@@ -135,15 +144,19 @@ function handleInput() {
 
   // Each axis is tested independently so the player slides along walls
   // rather than stopping dead on diagonal contact.
+  // COLLISION_PADDING probes 0.2 units ahead of the player center in the
+  // direction of movement so the player stops before meshes touch.
   if (dx !== 0) {
-    const nx = player.position.x + dx;
-    if (!levelManager.isWall(Math.round(nx), Math.round(player.position.z))) {
+    const nx    = player.position.x + dx;
+    const testX = nx + Math.sign(dx) * COLLISION_PADDING;
+    if (!levelManager.isWall(Math.round(testX), Math.round(player.position.z))) {
       player.position.x = nx;
     }
   }
   if (dz !== 0) {
-    const nz = player.position.z + dz;
-    if (!levelManager.isWall(Math.round(player.position.x), Math.round(nz))) {
+    const nz    = player.position.z + dz;
+    const testZ = nz + Math.sign(dz) * COLLISION_PADDING;
+    if (!levelManager.isWall(Math.round(player.position.x), Math.round(testZ))) {
       player.position.z = nz;
     }
   }
@@ -312,6 +325,9 @@ $id('btn-tex').addEventListener('click', () => {
 });
 
 $id('btn-render').addEventListener('click', () => {
+  // Before leaving 2D mode, translate any dict-ID placements into canonical
+  // TILE constants so the 3D renderer has correct floor/wall data.
+  if (worldRenderer.renderMode === '2D') worldRenderer.syncWorlds();
   worldRenderer.toggleRenderMode();
   const is3D = worldRenderer.renderMode === '3D';
   // Swap player representation — keep the invisible mesh as the position/collision anchor.

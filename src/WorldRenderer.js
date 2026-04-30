@@ -67,6 +67,40 @@ export class WorldRenderer {
     }
   }
 
+  /**
+   * Translate every tileDictionary ID in the grid into a canonical TILE constant
+   * so that 3D mode has correct floor/wall data after 2D edits.
+   *
+   * Mapping:
+   *   type 'wall'          → TILE.WALL  (2) — collision-blocking BoxGeometry
+   *   type 'floor'|'entity'→ TILE.FLOOR (1) — walkable PlaneGeometry
+   *                                            (entities sit on top in 3D)
+   *
+   * Call this before switching from 2D → 3D (already wired into the render-toggle
+   * button in main.js).  Also call it any time a tile is placed in 2D mode via
+   * the dev-tools buttons so the collision grid stays in sync.
+   */
+  syncWorlds() {
+    const grid = this.lm.grid;
+    let changed = 0;
+
+    for (let gz = 0; gz < grid.length; gz++) {
+      const row = grid[gz];
+      if (!row) continue;
+      for (let gx = 0; gx < row.length; gx++) {
+        const id  = row[gx];
+        const def = this.tileDict[id];
+        if (!def) continue;         // already a canonical TILE or EMPTY — skip
+
+        const canon = def.type === 'wall' ? TILE.WALL : TILE.FLOOR;
+        if (row[gx] !== canon) { row[gx] = canon; changed++; }
+      }
+    }
+
+    console.log(`[WorldRenderer] syncWorlds — ${changed} cell(s) canonicalised for 3D.`);
+    return changed;
+  }
+
   /** Dispose all existing meshes and remove them from the scene. */
   clearMeshes() {
     for (const entry of this.meshMap.values()) {
@@ -261,6 +295,8 @@ export class WorldRenderer {
     sprite.scale.set(cfg.sx, cfg.sy, 1);
     sprite.position.set(gx, cfg.y, gz);
     sprite.renderOrder = gz * 100 + gx + cfg.bias;
+    // Entity/prop sprites use a bottom anchor so their feet stay on the grid cell.
+    if (def.type === 'entity') sprite.center.set(0.5, 0.1);
     this.scene.add(sprite);
     console.log(`[WorldRenderer]   + sprite (${gx},${gz}) type=${def.type} pos=(${gx},${cfg.y},${gz}) renderOrder=${sprite.renderOrder}`);
     // greyMat and texMat both point to the same material — the dictionary already
