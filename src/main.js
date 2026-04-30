@@ -95,6 +95,11 @@ window.addEventListener('keyup', e => keys.delete(e.code));
 
 const SPEED = 0.08;
 
+// Tracks the last grid cell the player occupied so FOV only recomputes
+// when the player crosses into a new cell, not on every sub-pixel movement.
+let lastGX = Math.round(player.position.x);
+let lastGZ = Math.round(player.position.z);
+
 function handleInput() {
   let dx = 0, dz = 0;
   if (keys.has('KeyW')) dz -= SPEED;
@@ -115,6 +120,15 @@ function handleInput() {
     if (!levelManager.isWall(Math.round(player.position.x), Math.round(nz))) {
       player.position.z = nz;
     }
+  }
+
+  // Fire FOV update only when the player crosses a grid-cell boundary.
+  const gx = Math.round(player.position.x);
+  const gz = Math.round(player.position.z);
+  if (gx !== lastGX || gz !== lastGZ) {
+    lastGX = gx;
+    lastGZ = gz;
+    lighting.computeFOV(player.position);
   }
 }
 
@@ -191,11 +205,19 @@ $id('btn-switch').addEventListener('click', () => {
   levelManager.loadWorld(currentWorld);
   player.position.set(5, 0.5, 5);
   $id('dt-world').textContent = currentWorld;
+  // New map loaded — reset cell tracker and force a fresh FOV pass.
+  lastGX = null;
+  lastGZ = null;
+  lighting.invalidateFOV();
+  lighting.computeFOV(player.position);
 });
 
 $id('btn-light').addEventListener('click', () => {
   lighting.toggle();
   refreshBadge();
+  // When returning to FOV mode the cache was invalidated in toggle(),
+  // so this call recomputes immediately; it's a no-op in SPOT mode.
+  lighting.computeFOV(player.position);
 });
 
 // ── FOV Slider ─────────────────────────────────────────────────────────────
@@ -207,6 +229,9 @@ $id('fov-slider').addEventListener('input', e => {
   lighting.fovRadius = v;
   lighting.spot.angle = v * Math.PI / 180;
   lighting.spot.shadow.camera.updateProjectionMatrix();
+  // Radius changed — invalidate cache so the new radius is reflected instantly.
+  lighting.invalidateFOV();
+  lighting.computeFOV(player.position);
 });
 
 $id('lighting-preset').addEventListener('change', e => {
@@ -263,6 +288,9 @@ function animate() {
 
   renderer.render(scene, camera);
 }
+
+// Run the initial FOV pass before the first rendered frame.
+lighting.computeFOV(player.position);
 
 animate();
 console.log('Three.js initialized');

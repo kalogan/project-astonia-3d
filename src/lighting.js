@@ -25,6 +25,10 @@ export class LightingManager {
     this.lm = levelManager;
     this.mode = MODE.FOV;
     this.fovRadius = 7;
+    // Cache the last grid position so _computeFOV only runs when the player
+    // actually crosses a cell boundary, not on every animation frame.
+    this._cachedGX = null;
+    this._cachedGZ = null;
 
     // ── Mode A lights (FOV) ─────────────────────────────────────────────────
     this.hemi = new THREE.HemisphereLight(0x334466, 0x111122, 1.0);
@@ -56,16 +60,38 @@ export class LightingManager {
   toggle() {
     this.mode = this.mode === MODE.FOV ? MODE.SPOT : MODE.FOV;
     this._applyMode();
+    // Invalidate so the next computeFOV() call runs unconditionally.
+    this._cachedGX = null;
+    this._cachedGZ = null;
   }
 
-  // Called every animation frame with current player world-position.
+  // Called every animation frame — drives spotlight position only.
+  // FOV visibility is computed on-demand via computeFOV(), not here.
   update(playerPos) {
     if (this.mode === MODE.SPOT) {
       this.spot.position.set(playerPos.x, playerPos.y + 9, playerPos.z);
       this.spotTarget.position.set(playerPos.x, 0, playerPos.z);
-    } else {
-      this._computeFOV(playerPos);
     }
+  }
+
+  // Public: run the FOV only when the player has moved to a new grid cell.
+  // Exits immediately if the grid position is unchanged — safe to call
+  // from handleInput() every frame without measurable cost.
+  computeFOV(playerPos) {
+    if (this.mode !== MODE.FOV) return;
+    const gx = Math.round(playerPos.x);
+    const gz = Math.round(playerPos.z);
+    if (gx === this._cachedGX && gz === this._cachedGZ) return;
+    this._cachedGX = gx;
+    this._cachedGZ = gz;
+    this._computeFOV(playerPos);
+  }
+
+  // Force the next computeFOV() call to recompute regardless of cached position.
+  // Use this after world switches or radius changes.
+  invalidateFOV() {
+    this._cachedGX = null;
+    this._cachedGZ = null;
   }
 
   // ── Private ──────────────────────────────────────────────────────────────
