@@ -46,3 +46,10 @@ export const floorTex = (() => {
 
 // Wall — mapped once to every face of the BoxGeometry via Three.js default UVs.
 export const wallTex = loadPixelTexture('/textures/wall.png');
+
+// ── 2D isometric sprite textures ──────────────────────────────────────────────
+// Replace these paths with your actual pre-rendered isometric PNG assets.
+// Each PNG should have a transparent background and a baked-in isometric angle.
+export const floorSpriteTex  = loadPixelTexture('/textures/floor_sprite.png');
+export const wallSpriteTex   = loadPixelTexture('/textures/wall_sprite.png');
+export const playerSpriteTex = loadPixelTexture('/textures/player_sprite.png');

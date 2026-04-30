@@ -191,6 +191,18 @@ html, body {
   border: 1px solid rgba(190, 130, 0, 0.38);
 }
 
+.mode-badge.mode-3d {
+  background: rgba(0, 55, 80, 0.55);
+  color: #22ddff;
+  border: 1px solid rgba(0, 140, 180, 0.38);
+}
+
+.mode-badge.mode-2d {
+  background: rgba(60, 0, 80, 0.55);
+  color: #dd88ff;
+  border: 1px solid rgba(150, 0, 190, 0.38);
+}
+
 /* ── FOV Slider ──────────────────────────────────────────────────────────── */
 .slider-section {
   margin-bottom: 9px;

@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { LevelManager } from './LevelManager.js';
+import { LevelManager, tileDictionary } from './LevelManager.js';
+import { WorldRenderer } from './WorldRenderer.js';
 import { LightingManager, MODE } from './lighting.js';
-import { floorTex, wallTex } from './textures.js';
+import { floorTex, wallTex, floorSpriteTex, wallSpriteTex, playerSpriteTex } from './textures.js';
 import { initSlicer } from './slicer.js';
 import './style.css';
 
@@ -36,7 +37,7 @@ const gridHelper = new THREE.GridHelper(40, 40, 0x18182a, 0x18182a);
 gridHelper.position.y = 0.003;
 scene.add(gridHelper);
 
-// ── Player Mesh ───────────────────────────────────────────────────────────────
+// ── Player Mesh (3D mode) ─────────────────────────────────────────────────────
 const player = new THREE.Mesh(
   new THREE.BoxGeometry(0.65, 1.0, 0.65),
   new THREE.MeshLambertMaterial({ color: 0xff5533, emissive: 0x330a00 })
@@ -45,11 +46,34 @@ player.position.set(5, 0.5, 5);
 player.castShadow = true;
 scene.add(player);
 
+// ── Player Sprite (2D mode) ───────────────────────────────────────────────────
+// Replace '/textures/player_sprite.png' with your pre-rendered isometric character.
+const playerSpriteMat = new THREE.SpriteMaterial({
+  map:        playerSpriteTex,
+  color:      0xffffff,
+  depthTest:  false,
+  depthWrite: false,
+  transparent: true,
+});
+const playerSprite = new THREE.Sprite(playerSpriteMat);
+playerSprite.scale.set(1.0, 1.8, 1);  // adjust to match your character sprite dimensions
+playerSprite.visible = false;
+scene.add(playerSprite);
+
 // ── Level & Lighting ──────────────────────────────────────────────────────────
-const levelManager = new LevelManager(scene, { floor: floorTex, wall: wallTex });
+const levelManager = new LevelManager();
 levelManager.loadWorld(1);
 
-const lighting = new LightingManager(scene, levelManager);
+const worldRenderer = new WorldRenderer(scene, levelManager, {
+  floor:       floorTex,
+  wall:        wallTex,
+  floorSprite: floorSpriteTex,
+  wallSprite:  wallSpriteTex,
+  tileDict:    tileDictionary,
+});
+worldRenderer.rebuild();
+
+const lighting = new LightingManager(scene, worldRenderer);
 
 // ── Global Environment Lights ─────────────────────────────────────────────────
 // These are separate from the LightingManager's FOV/spot lights and are
@@ -186,10 +210,17 @@ devPanel.innerHTML = `
     <button id="btn-tex">
       <span class="btn-key">T</span>Toggle Textures
     </button>
+    <button id="btn-render">
+      <span class="btn-key">R</span>Toggle Render Mode
+    </button>
   </div>
   <div class="stat-row">
     <span class="stat-label">VIEW</span>
     <span id="tex-mode" class="tex-badge greybox">GREYBOX</span>
+  </div>
+  <div class="stat-row">
+    <span class="stat-label">RMODE</span>
+    <span id="render-mode" class="mode-badge mode-3d">3D</span>
   </div>
   <div class="dt-divider"></div>
   <div class="dt-section">ASSET SLICER</div>
@@ -222,20 +253,21 @@ function playerGridPos() {
 
 $id('btn-wall').addEventListener('click', () => {
   const { gx, gz } = playerGridPos();
-  levelManager.spawnWall(gx, gz);
+  worldRenderer.spawnWall(gx, gz);
 });
 
 $id('btn-floor').addEventListener('click', () => {
   const { gx, gz } = playerGridPos();
-  levelManager.spawnFloor(gx, gz);
+  worldRenderer.spawnFloor(gx, gz);
 });
 
 $id('btn-switch').addEventListener('click', () => {
-  currentWorld = currentWorld === 1 ? 2 : 1;
+  // Cycle: 1 → 2 → 3 (sprite test) → 1
+  currentWorld = currentWorld === 3 ? 1 : currentWorld + 1;
   levelManager.loadWorld(currentWorld);
-  player.position.set(5, 0.5, 5);
+  worldRenderer.rebuild();
+  player.position.set(2, 0.5, 2);
   $id('dt-world').textContent = currentWorld;
-  // New map loaded — reset cell tracker and force a fresh FOV pass.
   lastGX = null;
   lastGZ = null;
   lighting.invalidateFOV();
@@ -273,10 +305,23 @@ let texturedMode = false;
 
 $id('btn-tex').addEventListener('click', () => {
   texturedMode = !texturedMode;
-  levelManager.setTextured(texturedMode);
+  worldRenderer.setTextured(texturedMode);
   const badge = $id('tex-mode');
   badge.textContent = texturedMode ? 'TEXTURED' : 'GREYBOX';
   badge.className   = 'tex-badge ' + (texturedMode ? 'textured' : 'greybox');
+});
+
+$id('btn-render').addEventListener('click', () => {
+  worldRenderer.toggleRenderMode();
+  const is3D = worldRenderer.renderMode === '3D';
+  // Swap player representation — keep the invisible mesh as the position/collision anchor.
+  player.visible       = is3D;
+  playerSprite.visible = !is3D;
+  lighting.invalidateFOV();
+  lighting.computeFOV(player.position);
+  const badge = $id('render-mode');
+  badge.textContent = is3D ? '3D' : '2D';
+  badge.className   = 'mode-badge ' + (is3D ? 'mode-3d' : 'mode-2d');
 });
 
 function refreshBadge() {
@@ -291,6 +336,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyL') $id('btn-light').click();
   if (e.code === 'KeyX') $id('btn-switch').click();
   if (e.code === 'KeyT') $id('btn-tex').click();
+  if (e.code === 'KeyR') $id('btn-render').click();
 });
 
 function updateDevUI() {
@@ -326,6 +372,16 @@ function animate() {
   camera.lookAt(player.position);
 
   lighting.update(player.position);
+
+  // Keep the 2D player sprite locked to the 3D position reference.
+  // renderOrder is updated every frame so depth sorting stays correct as the player moves.
+  if (playerSprite.visible) {
+    playerSprite.position.copy(player.position);
+    const gx = Math.round(player.position.x);
+    const gz = Math.round(player.position.z);
+    playerSprite.renderOrder = gz * 100 + gx + 50;  // +50 so player draws above floor tiles
+  }
+
   updateDevUI();
 
   renderer.render(scene, camera);

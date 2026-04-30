@@ -20,9 +20,9 @@ function bresenham(x0, z0, x1, z1) {
 }
 
 export class LightingManager {
-  constructor(scene, levelManager) {
+  constructor(scene, worldRenderer) {
     this.scene = scene;
-    this.lm = levelManager;
+    this.lm = worldRenderer;
     this.mode = MODE.FOV;
     this.fovRadius = 7;
     // Cache the last grid position so _computeFOV only runs when the player
