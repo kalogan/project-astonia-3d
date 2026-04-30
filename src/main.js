@@ -49,6 +49,40 @@ levelManager.loadWorld(1);
 
 const lighting = new LightingManager(scene, levelManager);
 
+// ── Global Environment Lights ─────────────────────────────────────────────────
+// These are separate from the LightingManager's FOV/spot lights and are
+// controlled exclusively by the preset system below.
+const globalAmbient = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(globalAmbient);
+
+const globalDir = new THREE.DirectionalLight(0xffffff, 1.0);
+globalDir.position.set(20, 50, -20);  // high and angled for isometric shadow cast
+globalDir.castShadow = true;
+globalDir.shadow.mapSize.set(2048, 2048);
+globalDir.shadow.camera.near   =   0.5;
+globalDir.shadow.camera.far    = 200;
+globalDir.shadow.camera.left   = -30;
+globalDir.shadow.camera.right  =  30;
+globalDir.shadow.camera.top    =  30;
+globalDir.shadow.camera.bottom = -30;
+scene.add(globalDir);
+
+// ── Lighting Presets ──────────────────────────────────────────────────────────
+const PRESETS = {
+  studio: { ambColor: 0xffffff, ambInt: 0.6,  dirColor: 0xffffff, dirInt: 1.0, bg: 0x07070f },
+  warm:   { ambColor: 0xffaa77, ambInt: 0.4,  dirColor: 0xffcc88, dirInt: 0.8, bg: 0x110a05 },
+  dark:   { ambColor: 0x0a0a1a, ambInt: 0.05, dirColor: 0x444466, dirInt: 0.2, bg: 0x020205 },
+};
+
+function applyPreset(key) {
+  const p = PRESETS[key];
+  globalAmbient.color.set(p.ambColor);
+  globalAmbient.intensity = p.ambInt;
+  globalDir.color.set(p.dirColor);
+  globalDir.intensity = p.dirInt;
+  scene.background.set(p.bg);
+}
+
 // ── Keyboard Input ────────────────────────────────────────────────────────────
 const keys = new Set();
 const ATTACK_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
@@ -121,6 +155,15 @@ devPanel.innerHTML = `
     </div>
     <input type="range" id="fov-slider" min="5" max="50" value="7" />
   </div>
+  <div class="dt-divider"></div>
+  <div class="preset-row">
+    <span class="stat-label">ENV</span>
+    <select id="lighting-preset">
+      <option value="studio">Studio</option>
+      <option value="warm">Warm</option>
+      <option value="dark">Dark</option>
+    </select>
+  </div>
   <div class="dt-hint">WASD · move &nbsp;|&nbsp; ↑↓←→ · attack</div>
 `;
 
@@ -164,6 +207,10 @@ $id('fov-slider').addEventListener('input', e => {
   lighting.fovRadius = v;
   lighting.spot.angle = v * Math.PI / 180;
   lighting.spot.shadow.camera.updateProjectionMatrix();
+});
+
+$id('lighting-preset').addEventListener('change', e => {
+  applyPreset(e.target.value);
 });
 
 function refreshBadge() {
