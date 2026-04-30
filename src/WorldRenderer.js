@@ -213,9 +213,23 @@ export class WorldRenderer {
       url => console.error(`[WorldRenderer] Failed to load texture: ${url}`)
     );
 
+    // Build a src → fallback lookup so the onError handler can find the right colors.
+    const fallbackBySrc = new Map(
+      toSpawn
+        .filter(t => t.def.fallback)
+        .map(t => [t.def.src, t.def.fallback])
+    );
+
     const loader = new THREE.TextureLoader(manager);
     for (const src of newSrcs) {
-      const tex = loader.load(src);
+      const fb  = fallbackBySrc.get(src) ?? null;
+      const tex = loader.load(src, undefined, undefined, () => {
+        if (fb) {
+          tex.image = this._makeFallbackCanvas(fb.fill, fb.border ?? null);
+          tex.needsUpdate = true;
+          console.log(`[WorldRenderer] Fallback applied for ${src} → fill:${fb.fill}`);
+        }
+      });
       tex.magFilter      = THREE.NearestFilter;
       tex.minFilter      = THREE.NearestFilter;
       tex.generateMipmaps = false;
@@ -228,7 +242,7 @@ export class WorldRenderer {
   _spawnTile2D(gx, gz, def) {
     const cfg = WorldRenderer.SPRITE_TYPE[def.type] ?? WorldRenderer.SPRITE_TYPE.floor;
 
-    const tex    = this._loadTex(def.src);
+    const tex    = this._loadTex(def.src, def.fallback ?? null);
     const mat    = new THREE.SpriteMaterial({
       map:        tex,
       color:      0xffffff,
@@ -248,14 +262,35 @@ export class WorldRenderer {
   }
 
   // Cached pixel-art texture loader — each unique src path loads exactly once.
-  _loadTex(src) {
+  // Pass a fallback config { fill, border? } to get a colored canvas on 404.
+  _loadTex(src, fallback = null) {
     if (this._texCache.has(src)) return this._texCache.get(src);
-    const tex = new THREE.TextureLoader().load(src);
+    const tex = new THREE.TextureLoader().load(src, undefined, undefined, () => {
+      if (fallback) {
+        tex.image = this._makeFallbackCanvas(fallback.fill, fallback.border ?? null);
+        tex.needsUpdate = true;
+      }
+    });
     tex.magFilter      = THREE.NearestFilter;
     tex.minFilter      = THREE.NearestFilter;
     tex.generateMipmaps = false;
     this._texCache.set(src, tex);
     return tex;
+  }
+
+  // Draw a solid-colour 64×64 canvas with an optional 2px inset border.
+  _makeFallbackCanvas(fill, border = null, size = 64) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = fill;
+    ctx.fillRect(0, 0, size, size);
+    if (border) {
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(1, 1, size - 2, size - 2);
+    }
+    return canvas;
   }
 
   // Legacy per-tile spawn helpers — used by the public spawnFloor / spawnWall API

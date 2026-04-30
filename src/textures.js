@@ -16,14 +16,29 @@ import * as THREE from 'three';
 const loader = new THREE.TextureLoader();
 
 /**
- * Load an image and configure it for crisp pixel-art rendering.
- *
- * NearestFilter on both mag and min prevents the GPU from blending adjacent
- * pixels at any zoom level.  Mipmaps are disabled because the mip-chain would
- * pre-blur the image before it even reaches the fragment shader.
+ * Draw a solid-colour 64×64 canvas with an optional 2px border.
+ * Used as a fallback image when a texture URL returns 404.
  */
-export function loadPixelTexture(url) {
-  const tex = loader.load(url);
+export function makeColorCanvas(fill, border = null, size = 64) {
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = fill;
+  ctx.fillRect(0, 0, size, size);
+  if (border) {
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, size - 2, size - 2);
+  }
+  return canvas;
+}
+
+/**
+ * Load an image and configure it for crisp pixel-art rendering.
+ * Pass an optional onError callback to swap in a fallback when the URL is missing.
+ */
+export function loadPixelTexture(url, onError = undefined) {
+  const tex = loader.load(url, undefined, undefined, onError);
   tex.magFilter      = THREE.NearestFilter;
   tex.minFilter      = THREE.NearestFilter;
   tex.generateMipmaps = false;
@@ -52,4 +67,10 @@ export const wallTex = loadPixelTexture('/textures/wall.png');
 // Each PNG should have a transparent background and a baked-in isometric angle.
 export const floorSpriteTex  = loadPixelTexture('/textures/floor_sprite.png');
 export const wallSpriteTex   = loadPixelTexture('/textures/wall_sprite.png');
-export const playerSpriteTex = loadPixelTexture('/textures/player_sprite.png');
+export const playerSpriteTex = (() => {
+  const tex = loadPixelTexture('/textures/player_sprite.png', () => {
+    tex.image = makeColorCanvas('#BF00FF');
+    tex.needsUpdate = true;
+  });
+  return tex;
+})();

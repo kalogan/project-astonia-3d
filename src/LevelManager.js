@@ -10,9 +10,11 @@ export const TILE = { EMPTY: 0, FLOOR: 1, WALL: 2 };
 // 'type' controls scale and y-position; 'src' is the public-folder asset path.
 // Add entries here as you expand your tileset — IDs are arbitrary positive ints.
 export const tileDictionary = {
-  1: { type: 'floor',  src: '/00031530.png' },
-  2: { type: 'floor',  src: '/00031531.png' },
-  3: { type: 'entity', src: '/00031377.png' },
+  // fallback.fill / fallback.border are used when the PNG is missing (404).
+  // Remove the fallback key once your real assets are in /public.
+  1: { type: 'floor',  src: '/00031530.png', fallback: { fill: '#444444', border: '#666666' } },
+  2: { type: 'floor',  src: '/00031531.png', fallback: { fill: '#228B22', border: '#145214' } },
+  3: { type: 'entity', src: '/00031377.png', fallback: { fill: '#FFA500' } },
 };
 
 // World 1 — Dungeon room with scattered interior walls (12 × 12)
