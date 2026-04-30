@@ -163,12 +163,63 @@ export class WorldRenderer {
 
   _render2DWorld() {
     const grid = this.lm.grid;
+
+    // Build the full spawn list up-front so we know exactly what to load.
+    const toSpawn = [];
     for (let gz = 0; gz < grid.length; gz++) {
-      const row = grid[gz];
-      for (let gx = 0; gx < row.length; gx++) {
-        const def = this.tileDict[row[gx]];
-        if (def) this._spawnTile2D(gx, gz, def);
+      for (let gx = 0; gx < grid[gz].length; gx++) {
+        const id  = grid[gz][gx];
+        const def = this.tileDict[id];
+        if (def) toSpawn.push({ gx, gz, def });
       }
+    }
+
+    console.log(
+      `[WorldRenderer] _render2DWorld` +
+      ` | grid ${grid[0]?.length ?? 0}×${grid.length}` +
+      ` | tileDict keys: [${Object.keys(this.tileDict).join(', ')}]` +
+      ` | tiles to spawn: ${toSpawn.length}`
+    );
+
+    if (toSpawn.length === 0) {
+      console.warn('[WorldRenderer] No matching tiles — check tileDictionary IDs match grid values.');
+      return;
+    }
+
+    const spawnAll = () => {
+      for (const { gx, gz, def } of toSpawn) {
+        this._spawnTile2D(gx, gz, def);
+      }
+      console.log(`[WorldRenderer] Done — ${toSpawn.length} sprites added to scene.`);
+    };
+
+    // Collect src paths that are not yet in the texture cache.
+    const newSrcs = [...new Set(toSpawn.map(t => t.def.src))].filter(s => !this._texCache.has(s));
+
+    if (newSrcs.length === 0) {
+      // Every texture is already resident — spawn synchronously this frame.
+      console.log('[WorldRenderer] All textures cached — spawning immediately.');
+      spawnAll();
+      return;
+    }
+
+    // Some textures need a network/disk fetch.  Use LoadingManager so we spawn
+    // only after every asset is decoded and on the GPU.
+    console.log(`[WorldRenderer] Loading ${newSrcs.length} new texture(s):`, newSrcs);
+
+    const manager = new THREE.LoadingManager(
+      spawnAll,                                             // onLoad
+      undefined,                                            // onProgress
+      url => console.error(`[WorldRenderer] Failed to load texture: ${url}`)
+    );
+
+    const loader = new THREE.TextureLoader(manager);
+    for (const src of newSrcs) {
+      const tex = loader.load(src);
+      tex.magFilter      = THREE.NearestFilter;
+      tex.minFilter      = THREE.NearestFilter;
+      tex.generateMipmaps = false;
+      this._texCache.set(src, tex);
     }
   }
 
@@ -190,6 +241,7 @@ export class WorldRenderer {
     sprite.position.set(gx, cfg.y, gz);
     sprite.renderOrder = gz * 100 + gx + cfg.bias;
     this.scene.add(sprite);
+    console.log(`[WorldRenderer]   + sprite (${gx},${gz}) type=${def.type} pos=(${gx},${cfg.y},${gz}) renderOrder=${sprite.renderOrder}`);
     // greyMat and texMat both point to the same material — the dictionary already
     // supplies a texture for every entry so there is no separate "greybox" state.
     this.meshMap.set(`${gx},${gz}`, { mesh: sprite, greyMat: mat, texMat: mat });

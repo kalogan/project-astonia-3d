@@ -317,6 +317,8 @@ $id('btn-render').addEventListener('click', () => {
   // Swap player representation — keep the invisible mesh as the position/collision anchor.
   player.visible       = is3D;
   playerSprite.visible = !is3D;
+  // Ensure the orthographic camera recomputes its projection after the mode switch.
+  camera.updateProjectionMatrix();
   lighting.invalidateFOV();
   lighting.computeFOV(player.position);
   const badge = $id('render-mode');
