@@ -58,13 +58,22 @@ function buildFolderList(names) {
   list.innerHTML = '';
   const frag = document.createDocumentFragment();
   for (const name of names) {
-    const count = folderMap.get(name)?.length ?? 0;
-    const div   = document.createElement('div');
-    div.className = 'folder-item' + (name === activeFolder ? ' active' : '');
+    const count   = folderMap.get(name)?.length ?? 0;
+    const isActive = name === activeFolder;
+    const div     = document.createElement('div');
+    div.className    = 'folder-item' + (isActive ? ' active' : '');
     div.dataset.folder = name;
+    div.setAttribute('role', 'listitem');
+    div.setAttribute('tabindex', '0');
+    div.setAttribute('aria-selected', isActive);
+    div.setAttribute('aria-label', `${name}, ${count} sprites`);
     div.innerHTML =
       `<span class="fi-name">${name}</span><span class="fi-count">${count}</span>`;
-    div.addEventListener('click', () => selectFolder(name));
+    const activate = () => selectFolder(name);
+    div.addEventListener('click', activate);
+    div.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
     frag.appendChild(div);
   }
   list.appendChild(frag);
@@ -72,8 +81,11 @@ function buildFolderList(names) {
 
 function selectFolder(name) {
   activeFolder = name;
-  $$('.folder-item').forEach(el =>
-    el.classList.toggle('active', el.dataset.folder === name));
+  $$('.folder-item').forEach(el => {
+    const on = el.dataset.folder === name;
+    el.classList.toggle('active', on);
+    el.setAttribute('aria-selected', on);
+  });
 
   const files = folderMap.get(name) ?? [];
   $('flip-folder-name').textContent = `${name}  (${files.length})`;
@@ -104,6 +116,7 @@ function renderFlipFrame() {
   }
   const entry = flipFiles[flipIdx];
   img.src = entry.url;
+  img.alt = entry.filename;
   img.style.display = 'block';
   empty.style.display = 'none';
   counter.textContent = `${flipIdx + 1} / ${flipFiles.length}`;
@@ -155,7 +168,14 @@ function buildGrid(files) {
     cell.dataset.url      = f.url;
     cell.dataset.filename = f.filename;
     cell.title = f.filename;
-    cell.addEventListener('click', () => selectSprite(f));
+    cell.setAttribute('role', 'listitem');
+    cell.setAttribute('tabindex', '0');
+    cell.setAttribute('aria-label', f.filename);
+    const activate = () => selectSprite(f);
+    cell.addEventListener('click', activate);
+    cell.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+    });
     frag.appendChild(cell);
     gridObserver.observe(cell);
   }
@@ -196,7 +216,9 @@ function selectSprite(entry) {
   // Auto-suggest next free ID
   const usedIds = Object.keys(curated).map(Number);
   $('curate-id').value = usedIds.length ? Math.max(...usedIds) + 1 : 1;
-  $('curate-add').disabled = false;
+  const addBtn = $('curate-add');
+  addBtn.disabled = false;
+  addBtn.removeAttribute('aria-disabled');
 }
 
 // ── Right pane: curation ───────────────────────────────────────────────────────
@@ -329,13 +351,17 @@ function bindEvents() {
   $('flip-fps').addEventListener('input', e => {
     flipFps = parseInt(e.target.value, 10);
     $('flip-fps-val').textContent = flipFps;
+    e.target.setAttribute('aria-valuetext', `${flipFps} frames per second`);
     if (flipPlaying) restartFlipTimer();
   });
 
   $('flip-play').addEventListener('click', () => {
     flipPlaying = !flipPlaying;
-    $('flip-play').textContent = flipPlaying ? '⏸' : '▶';
-    $('flip-play').classList.toggle('active', flipPlaying);
+    const btn = $('flip-play');
+    btn.textContent = flipPlaying ? '⏸' : '▶';
+    btn.classList.toggle('active', flipPlaying);
+    btn.setAttribute('aria-pressed', flipPlaying);
+    btn.setAttribute('aria-label', flipPlaying ? 'Pause playback' : 'Play animation');
     if (flipPlaying) restartFlipTimer();
     else clearInterval(flipTimer);
   });
