@@ -15,6 +15,8 @@ export class WorldRenderer {
 
     // meshMap[`${gx},${gz}`] = { mesh, greyMat, texMat }
     this.meshMap = new Map();
+    // propMap — separate from meshMap so floor+prop can share a grid key.
+    this.propMap = new Map();
     // Cache loaded textures by src path — one GPU upload per unique asset.
     this._texCache = new Map();
   }
@@ -26,6 +28,7 @@ export class WorldRenderer {
     this.clearMeshes();
     if (this.renderMode === '3D') {
       this._render3DWorld();
+      this._render3DProps();
     } else {
       this._render2DWorld();
     }
@@ -92,6 +95,7 @@ export class WorldRenderer {
         const def = this.tileDict[id];
         if (!def) continue;         // already a canonical TILE or EMPTY — skip
 
+        if (def.type === 'prop') continue;   // props keep dict ID for _render3DProps
         const canon = def.type === 'wall' ? TILE.WALL : TILE.FLOOR;
         if (row[gx] !== canon) { row[gx] = canon; changed++; }
       }
@@ -107,10 +111,16 @@ export class WorldRenderer {
       this.scene.remove(entry.mesh);
       entry.greyMat.dispose();
       entry.texMat.dispose();
-      // Sprites share an internal geometry — only dispose per-mesh geometries.
       if (!entry.mesh.isSprite) entry.mesh.geometry.dispose();
     }
     this.meshMap.clear();
+    for (const entry of this.propMap.values()) {
+      this.scene.remove(entry.mesh);
+      entry.greyMat.dispose();
+      if (entry.greyMat !== entry.texMat) entry.texMat.dispose();
+      if (!entry.mesh.isSprite) entry.mesh.geometry.dispose();
+    }
+    this.propMap.clear();
   }
 
   // ── LightingManager interface (mirrors old LevelManager API) ───────────────
@@ -120,13 +130,13 @@ export class WorldRenderer {
   }
 
   setAllVisible(visible) {
-    for (const entry of this.meshMap.values()) {
-      entry.mesh.visible = visible;
-    }
+    for (const entry of this.meshMap.values()) entry.mesh.visible = visible;
+    for (const entry of this.propMap.values())  entry.mesh.visible = visible;
   }
 
   setMeshVisible(x, z, visible) {
-    const entry = this.meshMap.get(`${x},${z}`);
+    const key = `${x},${z}`;
+    const entry = this.meshMap.get(key) ?? this.propMap.get(key);
     if (entry) entry.mesh.visible = visible;
   }
 
@@ -200,6 +210,7 @@ export class WorldRenderer {
     floor:  { sx: 1.414, sy: 0.816, y: 0.00, bias: 0  },
     wall:   { sx: 1.414, sy: 1.633, y: 0.80, bias: 10 },
     entity: { sx: 1.000, sy: 1.800, y: 0.50, bias: 50 },
+    prop:   { sx: 1.200, sy: 2.000, y: 0.00, bias: 60 },
   };
 
   _render2DWorld() {
@@ -229,13 +240,30 @@ export class WorldRenderer {
 
     const spawnAll = () => {
       for (const { gx, gz, def } of toSpawn) {
-        this._spawnTile2D(gx, gz, def);
+        if (def.type === 'prop') {
+          // Spawn the floor base beneath the prop first, then the prop sprite.
+          if (def.floorBase != null) {
+            const baseDef = this.tileDict[def.floorBase];
+            if (baseDef) this._spawnTile2D(gx, gz, baseDef);
+          }
+          this._spawnPropSprite2D(gx, gz, def);
+        } else {
+          this._spawnTile2D(gx, gz, def);
+        }
       }
       console.log(`[WorldRenderer] Done — ${toSpawn.length} sprites added to scene.`);
     };
 
-    // Collect src paths that are not yet in the texture cache.
-    const newSrcs = [...new Set(toSpawn.map(t => t.def.src))].filter(s => !this._texCache.has(s));
+    // Collect all src paths needed — including floorBase sources under props.
+    const allSrcs = toSpawn.flatMap(t => {
+      const srcs = [t.def.src];
+      if (t.def.floorBase != null) {
+        const bd = this.tileDict[t.def.floorBase];
+        if (bd) srcs.push(bd.src);
+      }
+      return srcs;
+    });
+    const newSrcs = [...new Set(allSrcs)].filter(s => !this._texCache.has(s));
 
     if (newSrcs.length === 0) {
       // Every texture is already resident — spawn synchronously this frame.
@@ -254,12 +282,15 @@ export class WorldRenderer {
       url => console.error(`[WorldRenderer] Failed to load texture: ${url}`)
     );
 
-    // Build a src → fallback lookup so the onError handler can find the right colors.
-    const fallbackBySrc = new Map(
-      toSpawn
-        .filter(t => t.def.fallback)
-        .map(t => [t.def.src, t.def.fallback])
-    );
+    // Build a src → fallback lookup (covers both tile and floorBase srcs).
+    const fallbackBySrc = new Map();
+    for (const { def } of toSpawn) {
+      if (def.fallback) fallbackBySrc.set(def.src, def.fallback);
+      if (def.floorBase != null) {
+        const bd = this.tileDict[def.floorBase];
+        if (bd?.fallback) fallbackBySrc.set(bd.src, bd.fallback);
+      }
+    }
 
     const loader = new THREE.TextureLoader(manager);
     for (const src of newSrcs) {
@@ -302,6 +333,49 @@ export class WorldRenderer {
     // greyMat and texMat both point to the same material — the dictionary already
     // supplies a texture for every entry so there is no separate "greybox" state.
     this.meshMap.set(`${gx},${gz}`, { mesh: sprite, greyMat: mat, texMat: mat });
+  }
+
+  // Prop sprite — bottom-anchored so it grows upward from the grid cell.
+  _spawnPropSprite2D(gx, gz, def) {
+    const cfg = WorldRenderer.SPRITE_TYPE.prop;
+    const tex  = this._loadTex(def.src, def.fallback ?? null);
+    const mat  = new THREE.SpriteMaterial({
+      map: tex, color: 0xffffff, depthTest: false, depthWrite: false, transparent: true,
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(cfg.sx, cfg.sy, 1);
+    sprite.position.set(gx, cfg.y, gz);
+    sprite.renderOrder = gz * 100 + gx + cfg.bias;
+    sprite.center.set(0.5, 0);   // feet on grid, sprite grows upward
+    this.scene.add(sprite);
+    this.propMap.set(`${gx},${gz}`, { mesh: sprite, greyMat: mat, texMat: mat });
+  }
+
+  // Scan the grid for prop IDs and spawn 3D geometry for each.
+  _render3DProps() {
+    const grid = this.lm.grid;
+    for (let gz = 0; gz < grid.length; gz++) {
+      for (let gx = 0; gx < grid[gz].length; gx++) {
+        const id  = grid[gz][gx];
+        const def = this.tileDict[id];
+        if (def?.type !== 'prop') continue;
+        if (def.floorBase != null) this._spawnFloor3D(gx, gz);
+        if (def.mesh3d)            this._spawnProp3D(gx, gz, def);
+      }
+    }
+  }
+
+  _spawnProp3D(gx, gz, def) {
+    const m = def.mesh3d;
+    const geo = m.shape === 'cylinder'
+      ? new THREE.CylinderGeometry(m.r * 0.6, m.r, m.h, 8)
+      : new THREE.BoxGeometry(m.w, m.h, m.d);
+    const mat  = new THREE.MeshLambertMaterial({ color: m.color });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(gx, m.oy, gz);
+    mesh.castShadow = true;
+    this.scene.add(mesh);
+    this.propMap.set(`${gx},${gz}`, { mesh, greyMat: mat, texMat: mat });
   }
 
   // Cached pixel-art texture loader — each unique src path loads exactly once.
@@ -385,13 +459,15 @@ export class WorldRenderer {
   // ── Private helpers ────────────────────────────────────────────────────────
 
   _removeMesh(gx, gz) {
-    const key   = `${gx},${gz}`;
-    const entry = this.meshMap.get(key);
-    if (!entry) return;
-    this.scene.remove(entry.mesh);
-    entry.greyMat.dispose();
-    entry.texMat.dispose();
-    if (!entry.mesh.isSprite) entry.mesh.geometry.dispose();
-    this.meshMap.delete(key);
+    const key = `${gx},${gz}`;
+    for (const map of [this.meshMap, this.propMap]) {
+      const entry = map.get(key);
+      if (!entry) continue;
+      this.scene.remove(entry.mesh);
+      entry.greyMat.dispose();
+      if (entry.greyMat !== entry.texMat) entry.texMat.dispose();
+      if (!entry.mesh.isSprite) entry.mesh.geometry.dispose();
+      map.delete(key);
+    }
   }
 }

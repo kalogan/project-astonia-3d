@@ -5,17 +5,39 @@
 
 export const TILE = { EMPTY: 0, FLOOR: 1, WALL: 2 };
 
+/** Build a public-folder sprite path from folder + filename. */
+export const getSpritePath = (folder, filename) => `/sprites/${folder}/${filename}`;
+
 // ── Tile Dictionary ────────────────────────────────────────────────────────────
 // Maps integer tile IDs to sprite metadata used by WorldRenderer in 2D mode.
-// 'type' controls scale and y-position; 'src' is the public-folder asset path.
-// Add entries here as you expand your tileset — IDs are arbitrary positive ints.
+//   type      — 'floor' | 'wall' | 'prop'
+//   src       — public-folder path; use getSpritePath() for consistency
+//   fallback  — colored diamond fallback when PNG is missing (404)
+//   floorBase — (prop only) tile ID to auto-spawn as ground beneath the prop
+//   mesh3d    — (prop only) geometry descriptor used in 3D mode
 export const tileDictionary = {
-  // fallback.fill / fallback.border are used when the PNG is missing (404).
-  // Colors match the 3D greybox palette so the 2D layout reads identically.
-  // Remove the fallback key once your real assets are in /public.
-  1: { type: 'floor',  src: '/00031530.png', fallback: { fill: '#2c2e3b', border: '#424451' } },
-  2: { type: 'floor',  src: '/00031531.png', fallback: { fill: '#1a1c23', border: '#303239' } },
-  3: { type: 'entity', src: '/00031377.png', fallback: { fill: '#FFA500', border: '#FFB733' } },
+  1: { type: 'floor', src: getSpritePath('tiles', 'grass_00.png'),
+       fallback: { fill: '#3a6b2a', border: '#4d8a38' } },
+  2: { type: 'floor', src: getSpritePath('tiles', 'grass_with_path_00.png'),
+       fallback: { fill: '#8a7040', border: '#a8894f' } },
+  3: { type: 'floor', src: getSpritePath('tiles', 'mines_00.png'),
+       fallback: { fill: '#2c2e3b', border: '#424451' } },
+  4: { type: 'prop',  src: getSpritePath('props', 'mine_cart_sw.png'),
+       floorBase: 3,
+       mesh3d: { shape: 'box', color: 0x777777, w: 0.6, h: 0.4, d: 0.6, oy: 0.2 },
+       fallback: { fill: '#777777', border: '#999999' } },
+  5: { type: 'prop',  src: getSpritePath('props', 'tree_00.png'),
+       floorBase: 1,
+       mesh3d: { shape: 'cylinder', color: 0x1a4a1a, r: 0.25, h: 1.8, oy: 0.9 },
+       fallback: { fill: '#1a4a1a', border: '#2a6a2a' } },
+  6: { type: 'prop',  src: getSpritePath('props', 'tree_01.png'),
+       floorBase: 1,
+       mesh3d: { shape: 'cylinder', color: 0x1e5a1e, r: 0.25, h: 1.8, oy: 0.9 },
+       fallback: { fill: '#1e5a1e', border: '#2e7a2e' } },
+  7: { type: 'prop',  src: getSpritePath('props', 'tree_02.png'),
+       floorBase: 1,
+       mesh3d: { shape: 'cylinder', color: 0x245e24, r: 0.25, h: 1.8, oy: 0.9 },
+       fallback: { fill: '#245e24', border: '#347e34' } },
 };
 
 // World 1 — Dungeon room with scattered interior walls (12 × 12)
@@ -53,16 +75,15 @@ const WORLD_2 = [
   [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
 ];
 
-// World 3 — Hardcoded 2D sprite test (5 × 5)
-// IDs map to tileDictionary entries above.
-// Tile 1 and 2 are floor variants; tile 3 is the entity/prop in the centre.
-// This world is designed for 2D render-mode testing — load it and press R.
+// World 3 — Asset showcase (5 × 5)
+// Corner trees (5,6,7), mine floor interior (3), path accent (2),
+// mine cart prop (4) in the centre. Switch to this world and press R.
 const WORLD_3 = [
-  [1, 2, 1, 2, 1],
-  [2, 1, 2, 1, 2],
-  [1, 2, 3, 2, 1],
-  [2, 1, 2, 1, 2],
-  [1, 2, 1, 2, 1],
+  [5, 3, 3, 3, 6],
+  [3, 1, 2, 1, 3],
+  [3, 2, 4, 2, 3],
+  [3, 1, 2, 1, 3],
+  [7, 3, 3, 3, 5],
 ];
 
 export const WORLDS = [null, WORLD_1, WORLD_2, WORLD_3];
