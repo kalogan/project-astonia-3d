@@ -20,15 +20,15 @@ html, body {
   top: 14px;
   left: 14px;
   z-index: 10;
-  background: rgba(5, 5, 14, 0.90);
-  color: #a8a8c4;
+  background: rgba(15, 23, 42, 0.92);
+  color: #94a3b8;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 11px;
+  font-size: 13px;
   padding: 12px 13px 10px;
   border-radius: 7px;
-  border: 1px solid rgba(90, 90, 170, 0.22);
-  backdrop-filter: blur(8px);
-  min-width: 196px;
+  border: 1px solid #334155;
+  backdrop-filter: blur(10px);
+  min-width: 200px;
   user-select: none;
 }
 
@@ -38,13 +38,15 @@ html, body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 9px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #334155;
 }
 
 .dt-title {
-  color: #6060bb;
-  font-size: 10px;
+  color: #f8fafc;
+  font-size: 14px;
   font-weight: bold;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
 }
 
 /* Stats section */
@@ -60,22 +62,25 @@ html, body {
 }
 
 .stat-label {
-  color: #44446a;
-  min-width: 40px;
+  color: #94a3b8;
+  font-weight: bold;
+  min-width: 44px;
   letter-spacing: 1px;
 }
 
 .stat-row span:last-child {
-  color: #55ffaa;
+  color: #94a3b8;
   text-align: right;
   font-variant-numeric: tabular-nums;
+  /* Halo: keeps values legible if the panel sits over a bright tile */
+  text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
 }
 
 /* Horizontal rule */
 .dt-divider {
   height: 1px;
-  background: rgba(90, 90, 170, 0.15);
-  margin: 8px 0;
+  background: #334155;
+  margin: 9px 0;
 }
 
 /* Button group */
@@ -90,27 +95,59 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(22, 22, 42, 0.85);
-  color: #9999c8;
-  border: 1px solid rgba(90, 90, 170, 0.28);
+  background: transparent;
+  color: #38bdf8;
+  border: 1px solid #334155;
   border-radius: 4px;
-  padding: 6px 9px;
+  padding: 0 10px;
+  min-height: 36px;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   width: 100%;
   text-align: left;
-  transition: background 0.1s, border-color 0.1s, color 0.1s;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
+/* Ghost hover — invert: bg becomes accent, text goes dark */
 #dev-tools button:hover {
-  background: rgba(44, 44, 88, 0.95);
-  border-color: rgba(130, 130, 240, 0.55);
-  color: #ddddff;
+  background: #38bdf8;
+  border-color: #38bdf8;
+  color: #0f172a;
+}
+#dev-tools button:hover .btn-key {
+  background: rgba(15, 23, 42, 0.25);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.3);
 }
 
 #dev-tools button:active {
-  background: rgba(60, 60, 120, 0.95);
+  background: #0ea5e9;
+  border-color: #0ea5e9;
+  color: #0f172a;
+}
+
+/* Lit-up active state — solid amber, black text */
+#dev-tools button.btn-active {
+  background: #fbbf24;
+  border-color: #fbbf24;
+  color: #0f172a;
+  font-weight: 700;
+}
+#dev-tools button.btn-active .btn-key {
+  background: rgba(15, 23, 42, 0.2);
+  color: #0f172a;
+  border-color: rgba(15, 23, 42, 0.25);
+}
+#dev-tools button.btn-active:hover {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+#dev-tools button:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
 }
 
 /* Keyboard shortcut badge on button */
@@ -118,32 +155,34 @@ html, body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(70, 70, 150, 0.35);
-  color: #8888ee;
-  border: 1px solid rgba(90, 90, 180, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
   border-radius: 3px;
-  width: 17px;
-  height: 17px;
-  font-size: 9px;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
   font-weight: bold;
   flex-shrink: 0;
 }
 
 /* Hint text */
 .dt-hint {
-  color: #2e2e50;
+  color: #64748b;
   font-size: 10px;
   text-align: center;
   letter-spacing: 0.3px;
+  padding-top: 2px;
 }
 
 /* ── Tileset Section ─────────────────────────────────────────────────────── */
 .dt-section {
-  color: #44446a;
-  font-size: 9px;
+  color: #64748b;
+  font-size: 10px;
   font-weight: bold;
   letter-spacing: 2px;
   margin-bottom: 7px;
+  text-transform: uppercase;
 }
 
 .tex-badge {
@@ -215,8 +254,9 @@ html, body {
 }
 
 .slider-label-row span:last-child {
-  color: #55ffaa;
+  color: #94a3b8;
   font-variant-numeric: tabular-nums;
+  font-weight: bold;
   min-width: 20px;
   text-align: right;
 }
@@ -225,34 +265,41 @@ html, body {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 3px;
-  background: rgba(90, 90, 170, 0.35);
+  height: 4px;
+  background: #334155;
   border-radius: 2px;
   outline: none;
   cursor: pointer;
 }
 
+#fov-slider:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
 #fov-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 13px;
-  height: 13px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #5555cc;
-  border: 1px solid rgba(130, 130, 240, 0.7);
+  background: #38bdf8;
+  border: 2px solid #0f172a;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.1s, transform 0.1s;
 }
 
 #fov-slider::-webkit-slider-thumb:hover {
-  background: #8888ff;
+  background: #7dd3fc;
+  transform: scale(1.15);
 }
 
 #fov-slider::-moz-range-thumb {
-  width: 13px;
-  height: 13px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #5555cc;
-  border: 1px solid rgba(130, 130, 240, 0.7);
+  background: #38bdf8;
+  border: 2px solid #0f172a;
   cursor: pointer;
 }
 
@@ -268,30 +315,35 @@ html, body {
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
-  background-color: rgba(22, 22, 42, 0.9);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236666aa'/%3E%3C/svg%3E");
+  background-color: rgba(15, 23, 42, 0.9);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 7px center;
-  color: #9999c8;
-  border: 1px solid rgba(90, 90, 170, 0.35);
+  color: #e2e8f0;
+  border: 1px solid #334155;
   border-radius: 4px;
   padding: 5px 24px 5px 8px;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   outline: none;
   transition: border-color 0.1s, color 0.1s;
 }
 
-#lighting-preset:hover,
+#lighting-preset:hover {
+  border-color: #475569;
+  color: #f8fafc;
+}
+
 #lighting-preset:focus {
-  border-color: rgba(130, 130, 240, 0.55);
-  color: #ddddff;
+  border-color: #60a5fa;
+  outline: 1px solid #60a5fa;
+  outline-offset: -1px;
 }
 
 #lighting-preset option {
-  background: #0d0d1e;
-  color: #9999c8;
+  background: #0f172a;
+  color: #e2e8f0;
 }
 
 /* ── Asset Slicer controls (inside #dev-tools) ───────────────────────────── */
@@ -359,7 +411,9 @@ html, body {
 }
 
 .slicer-dim-row input[type="number"]:focus {
-  border-color: rgba(130, 130, 240, 0.55);
+  border-color: #60a5fa;
+  outline: 1px solid #60a5fa;
+  outline-offset: -1px;
 }
 
 .slicer-sep {

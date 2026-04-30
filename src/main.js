@@ -187,17 +187,17 @@ devPanel.innerHTML = `
   </div>
   <div class="dt-divider"></div>
   <div class="btn-group">
-    <button id="btn-wall">
-      <span class="btn-key">W</span>Spawn Wall
+    <button id="btn-wall"   aria-label="Spawn wall at player position (W)">
+      <span class="btn-key" aria-hidden="true">W</span>Spawn Wall
     </button>
-    <button id="btn-floor">
-      <span class="btn-key">F</span>Spawn Floor
+    <button id="btn-floor"  aria-label="Spawn floor at player position (F)">
+      <span class="btn-key" aria-hidden="true">F</span>Spawn Floor
     </button>
-    <button id="btn-switch">
-      <span class="btn-key">X</span>Switch World
+    <button id="btn-switch" aria-label="Cycle to next world (X)">
+      <span class="btn-key" aria-hidden="true">X</span>Switch World
     </button>
-    <button id="btn-light">
-      <span class="btn-key">L</span>Toggle Lighting
+    <button id="btn-light"  aria-label="Toggle FOV / Spot lighting mode (L)" aria-pressed="false">
+      <span class="btn-key" aria-hidden="true">L</span>Toggle Lighting
     </button>
   </div>
   <div class="dt-divider"></div>
@@ -206,12 +206,14 @@ devPanel.innerHTML = `
       <span class="stat-label">FOV</span>
       <span id="fov-value">7</span>
     </div>
-    <input type="range" id="fov-slider" min="5" max="50" value="7" />
+    <input type="range" id="fov-slider" min="5" max="50" value="7"
+           aria-label="Field of view radius in grid cells"
+           aria-valuetext="7 cells" />
   </div>
   <div class="dt-divider"></div>
   <div class="preset-row">
     <span class="stat-label">ENV</span>
-    <select id="lighting-preset">
+    <select id="lighting-preset" aria-label="Lighting environment preset">
       <option value="studio">Studio</option>
       <option value="warm">Warm</option>
       <option value="dark">Dark</option>
@@ -220,11 +222,11 @@ devPanel.innerHTML = `
   <div class="dt-divider"></div>
   <div class="dt-section">TILESETS</div>
   <div class="btn-group">
-    <button id="btn-tex">
-      <span class="btn-key">T</span>Toggle Textures
+    <button id="btn-tex"    aria-label="Toggle texture / greybox display (T)" aria-pressed="false">
+      <span class="btn-key" aria-hidden="true">T</span>Toggle Textures
     </button>
-    <button id="btn-render">
-      <span class="btn-key">R</span>Toggle Render Mode
+    <button id="btn-render" aria-label="Toggle 2D / 3D render mode (R)" aria-pressed="false">
+      <span class="btn-key" aria-hidden="true">R</span>Toggle Render Mode
     </button>
   </div>
   <div class="stat-row">
@@ -301,6 +303,7 @@ $id('btn-light').addEventListener('click', () => {
 $id('fov-slider').addEventListener('input', e => {
   const v = parseInt(e.target.value, 10);
   $id('fov-value').textContent = v;
+  e.target.setAttribute('aria-valuetext', `${v} cells`);
   lighting.fovRadius = v;
   lighting.spot.angle = v * Math.PI / 180;
   lighting.spot.shadow.camera.updateProjectionMatrix();
@@ -322,6 +325,9 @@ $id('btn-tex').addEventListener('click', () => {
   const badge = $id('tex-mode');
   badge.textContent = texturedMode ? 'TEXTURED' : 'GREYBOX';
   badge.className   = 'tex-badge ' + (texturedMode ? 'textured' : 'greybox');
+  const btn = $id('btn-tex');
+  btn.classList.toggle('btn-active', texturedMode);
+  btn.setAttribute('aria-pressed', texturedMode);
 });
 
 $id('btn-render').addEventListener('click', () => {
@@ -340,6 +346,10 @@ $id('btn-render').addEventListener('click', () => {
   const badge = $id('render-mode');
   badge.textContent = is3D ? '3D' : '2D';
   badge.className   = 'mode-badge ' + (is3D ? 'mode-3d' : 'mode-2d');
+  // Lit-up when 2D mode is active (non-default state)
+  const btn = $id('btn-render');
+  btn.classList.toggle('btn-active', !is3D);
+  btn.setAttribute('aria-pressed', !is3D);
 });
 
 function refreshBadge() {
@@ -347,6 +357,10 @@ function refreshBadge() {
   const isFov = lighting.mode === MODE.FOV;
   badge.textContent = isFov ? 'MODE A · FOV' : 'MODE B · SPOT';
   badge.className   = 'mode-badge ' + (isFov ? 'mode-a' : 'mode-b');
+  // Lit-up when the non-default SPOT mode is active
+  const btn = $id('btn-light');
+  btn.classList.toggle('btn-active', !isFov);
+  btn.setAttribute('aria-pressed', !isFov);
 }
 
 // Keyboard shortcuts that mirror the panel buttons
