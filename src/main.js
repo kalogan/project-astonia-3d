@@ -62,10 +62,26 @@ window.addEventListener('keyup', e => keys.delete(e.code));
 const SPEED = 0.08;
 
 function handleInput() {
-  if (keys.has('KeyW')) player.position.z -= SPEED;
-  if (keys.has('KeyS')) player.position.z += SPEED;
-  if (keys.has('KeyA')) player.position.x -= SPEED;
-  if (keys.has('KeyD')) player.position.x += SPEED;
+  let dx = 0, dz = 0;
+  if (keys.has('KeyW')) dz -= SPEED;
+  if (keys.has('KeyS')) dz += SPEED;
+  if (keys.has('KeyA')) dx -= SPEED;
+  if (keys.has('KeyD')) dx += SPEED;
+
+  // Each axis is tested independently so the player slides along walls
+  // rather than stopping dead on diagonal contact.
+  if (dx !== 0) {
+    const nx = player.position.x + dx;
+    if (!levelManager.isWall(Math.round(nx), Math.round(player.position.z))) {
+      player.position.x = nx;
+    }
+  }
+  if (dz !== 0) {
+    const nz = player.position.z + dz;
+    if (!levelManager.isWall(Math.round(player.position.x), Math.round(nz))) {
+      player.position.z = nz;
+    }
+  }
 }
 
 // ── Dev Tools DOM ─────────────────────────────────────────────────────────────
@@ -96,6 +112,14 @@ devPanel.innerHTML = `
     <button id="btn-light">
       <span class="btn-key">L</span>Toggle Lighting
     </button>
+  </div>
+  <div class="dt-divider"></div>
+  <div class="slider-section">
+    <div class="slider-label-row">
+      <span class="stat-label">FOV</span>
+      <span id="fov-value">7</span>
+    </div>
+    <input type="range" id="fov-slider" min="5" max="50" value="7" />
   </div>
   <div class="dt-hint">WASD · move &nbsp;|&nbsp; ↑↓←→ · attack</div>
 `;
@@ -129,6 +153,17 @@ $id('btn-switch').addEventListener('click', () => {
 $id('btn-light').addEventListener('click', () => {
   lighting.toggle();
   refreshBadge();
+});
+
+// ── FOV Slider ─────────────────────────────────────────────────────────────
+// Mode A: slider value = fovRadius (grid cells).
+// Mode B: slider value interpreted as degrees → converted to radians for spot.angle.
+$id('fov-slider').addEventListener('input', e => {
+  const v = parseInt(e.target.value, 10);
+  $id('fov-value').textContent = v;
+  lighting.fovRadius = v;
+  lighting.spot.angle = v * Math.PI / 180;
+  lighting.spot.shadow.camera.updateProjectionMatrix();
 });
 
 function refreshBadge() {

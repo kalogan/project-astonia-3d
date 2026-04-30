@@ -159,3 +159,56 @@ html, body {
   color: #ffcc22;
   border: 1px solid rgba(190, 130, 0, 0.38);
 }
+
+/* ── FOV Slider ──────────────────────────────────────────────────────────── */
+.slider-section {
+  margin-bottom: 9px;
+}
+
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.slider-label-row span:last-child {
+  color: #55ffaa;
+  font-variant-numeric: tabular-nums;
+  min-width: 20px;
+  text-align: right;
+}
+
+#fov-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: rgba(90, 90, 170, 0.35);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+#fov-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #5555cc;
+  border: 1px solid rgba(130, 130, 240, 0.7);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+#fov-slider::-webkit-slider-thumb:hover {
+  background: #8888ff;
+}
+
+#fov-slider::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #5555cc;
+  border: 1px solid rgba(130, 130, 240, 0.7);
+  cursor: pointer;
+}
