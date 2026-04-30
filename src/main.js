@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { LevelManager } from './LevelManager.js';
 import { LightingManager, MODE } from './lighting.js';
 import { floorTex, wallTex } from './textures.js';
+import { initSlicer } from './slicer.js';
 import './style.css';
 
 // ── Renderer ──────────────────────────────────────────────────────────────────
@@ -190,6 +191,23 @@ devPanel.innerHTML = `
     <span class="stat-label">VIEW</span>
     <span id="tex-mode" class="tex-badge greybox">GREYBOX</span>
   </div>
+  <div class="dt-divider"></div>
+  <div class="dt-section">ASSET SLICER</div>
+  <div class="slicer-controls">
+    <div class="slicer-file-row">
+      <span class="stat-label">SHEET</span>
+      <label class="slicer-btn" for="slicer-file">Browse…</label>
+      <input type="file" id="slicer-file" accept="image/*" />
+    </div>
+    <div class="slicer-dim-row">
+      <span class="stat-label">TILE</span>
+      <input type="number" id="tile-w" value="32" min="1" max="512" />
+      <span class="slicer-sep">×</span>
+      <input type="number" id="tile-h" value="32" min="1" max="512" />
+      <span class="slicer-sep">px</span>
+    </div>
+    <div id="slicer-info" class="slicer-info">no image loaded</div>
+  </div>
   <div class="dt-hint">WASD · move &nbsp;|&nbsp; ↑↓←→ · attack</div>
 `;
 
@@ -315,6 +333,9 @@ function animate() {
 
 // Run the initial FOV pass before the first rendered frame.
 lighting.computeFOV(player.position);
+
+// Boot the slicer — completely isolated from the game loop.
+initSlicer();
 
 animate();
 console.log('Three.js initialized');
