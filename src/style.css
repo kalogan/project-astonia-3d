@@ -6,6 +6,7 @@
 
 html, body {
   overflow: hidden;
+  background: #07070f;
 }
 
 #canvas-container {
@@ -13,19 +14,148 @@ html, body {
   height: 100vh;
 }
 
+/* ── Dev Tools Panel ─────────────────────────────────────────────────────── */
 #dev-tools {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 14px;
+  left: 14px;
   z-index: 10;
-  background: rgba(10, 10, 15, 0.75);
-  color: #e0e0e0;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(4px);
-  min-width: 160px;
-  pointer-events: none;
+  background: rgba(5, 5, 14, 0.90);
+  color: #a8a8c4;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  padding: 12px 13px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(90, 90, 170, 0.22);
+  backdrop-filter: blur(8px);
+  min-width: 196px;
+  user-select: none;
+}
+
+/* Header row */
+.dt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+
+.dt-title {
+  color: #6060bb;
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+/* Stats section */
+.dt-stats {
+  margin-bottom: 8px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.stat-label {
+  color: #44446a;
+  min-width: 40px;
+  letter-spacing: 1px;
+}
+
+.stat-row span:last-child {
+  color: #55ffaa;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Horizontal rule */
+.dt-divider {
+  height: 1px;
+  background: rgba(90, 90, 170, 0.15);
+  margin: 8px 0;
+}
+
+/* Button group */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+
+#dev-tools button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 22, 42, 0.85);
+  color: #9999c8;
+  border: 1px solid rgba(90, 90, 170, 0.28);
+  border-radius: 4px;
+  padding: 6px 9px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+
+#dev-tools button:hover {
+  background: rgba(44, 44, 88, 0.95);
+  border-color: rgba(130, 130, 240, 0.55);
+  color: #ddddff;
+}
+
+#dev-tools button:active {
+  background: rgba(60, 60, 120, 0.95);
+}
+
+/* Keyboard shortcut badge on button */
+.btn-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(70, 70, 150, 0.35);
+  color: #8888ee;
+  border: 1px solid rgba(90, 90, 180, 0.4);
+  border-radius: 3px;
+  width: 17px;
+  height: 17px;
+  font-size: 9px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* Hint text */
+.dt-hint {
+  color: #2e2e50;
+  font-size: 10px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* ── Mode Badges ─────────────────────────────────────────────────────────── */
+.mode-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1.2px;
+  line-height: 16px;
+}
+
+.mode-badge.mode-a {
+  background: rgba(0, 70, 55, 0.55);
+  color: #22ffaa;
+  border: 1px solid rgba(0, 160, 110, 0.35);
+}
+
+.mode-badge.mode-b {
+  background: rgba(80, 44, 0, 0.55);
+  color: #ffcc22;
+  border: 1px solid rgba(190, 130, 0, 0.38);
 }
