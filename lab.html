@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asset Lab</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:          #07080f;
+      --panel:       #0b0d1a;
+      --panel-alt:   #090b16;
+      --border:      rgba(50, 70, 150, 0.22);
+      --border-hi:   rgba(80, 110, 220, 0.45);
+      --text:        #8888b8;
+      --text-bright: #b8bce0;
+      --text-dim:    #333355;
+      --accent:      #4466ff;
+      --green:       #22ffaa;
+      --amber:       #ffaa33;
+      --purple:      #aa66ff;
+      --red:         #ff5566;
+      --font:        'Courier New', monospace;
+    }
+
+    html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 11px; }
+
+    /* ── App shell ────────────────────────────────────────────────────────── */
+    #app { display: grid; grid-template-rows: 32px 1fr; height: 100vh; }
+
+    #lab-header {
+      display: flex; align-items: center; gap: 10px; padding: 0 14px;
+      background: rgba(10, 12, 25, 0.97); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .lab-logo { color: var(--accent); font-weight: bold; font-size: 10px; letter-spacing: 3px; }
+    .lab-sep  { color: var(--text-dim); }
+    #lab-stats { color: var(--text-dim); font-size: 10px; margin-left: auto; letter-spacing: 0.5px; }
+
+    #lab-body {
+      display: grid;
+      grid-template-columns: 230px 1fr 290px;
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── Shared pane elements ─────────────────────────────────────────────── */
+    .pane { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border); }
+    .pane:last-child { border-right: none; }
+
+    .pane-hdr {
+      flex-shrink: 0; padding: 7px 10px 6px;
+      background: var(--panel-alt); border-bottom: 1px solid var(--border);
+      color: var(--text-dim); font-size: 9px; font-weight: bold; letter-spacing: 2.5px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .pane-hdr .badge {
+      margin-left: auto; background: rgba(40,60,160,0.4);
+      color: var(--accent); border: 1px solid rgba(60,90,220,0.35);
+      border-radius: 3px; padding: 1px 6px; font-size: 9px; letter-spacing: 0;
+    }
+
+    /* ── Left: Library ────────────────────────────────────────────────────── */
+    #pane-library { background: var(--panel-alt); }
+
+    #lib-search {
+      flex-shrink: 0; width: 100%; padding: 7px 10px;
+      background: rgba(10,12,28,0.8); border: none; border-bottom: 1px solid var(--border);
+      color: var(--text-bright); font-family: var(--font); font-size: 11px; outline: none;
+    }
+    #lib-search::placeholder { color: var(--text-dim); }
+    #lib-search:focus { border-bottom-color: var(--border-hi); }
+
+    #folder-list { flex: 1; overflow-y: auto; }
+    #folder-list::-webkit-scrollbar { width: 4px; }
+    #folder-list::-webkit-scrollbar-track { background: transparent; }
+    #folder-list::-webkit-scrollbar-thumb { background: rgba(60,80,160,0.35); border-radius: 2px; }
+
+    .folder-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 5px 10px; cursor: pointer; border-bottom: 1px solid transparent;
+      transition: background 0.08s;
+    }
+    .folder-item:hover  { background: rgba(40,60,160,0.2); }
+    .folder-item.active { background: rgba(40,70,200,0.3); border-bottom-color: rgba(60,100,255,0.2); }
+    .folder-item.active .fi-name { color: var(--text-bright); }
+
+    .fi-name  { color: var(--text); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+    .fi-count { color: var(--text-dim); font-size: 10px; flex-shrink: 0; }
+    .folder-item.active .fi-count { color: var(--accent); }
+
+    /* ── Center: Viewer ───────────────────────────────────────────────────── */
+    #pane-viewer { background: var(--panel); }
+
+    /* Flipbook */
+    #flipbook {
+      flex-shrink: 0; background: var(--panel-alt);
+      border-bottom: 1px solid var(--border); padding: 10px 12px 9px;
+    }
+    #flip-top { display: flex; gap: 12px; align-items: center; }
+
+    #flip-stage {
+      flex-shrink: 0; width: 160px; height: 160px;
+      background: rgba(4,5,12,0.9); border: 1px solid var(--border);
+      border-radius: 4px; display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    #flip-img {
+      max-width: 100%; max-height: 100%; display: block;
+      image-rendering: pixelated; image-rendering: crisp-edges;
+      object-fit: contain;
+    }
+    #flip-empty { color: var(--text-dim); font-size: 10px; }
+
+    #flip-info { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+
+    #flip-folder-name {
+      color: var(--text-bright); font-size: 12px; font-weight: bold;
+      letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    #flip-filename { color: var(--text-dim); font-size: 10px; min-height: 14px; }
+    #flip-counter  { color: var(--accent); font-size: 10px; letter-spacing: 1px; }
+
+    .flip-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+    .flip-btn {
+      background: rgba(20,24,50,0.9); color: var(--text);
+      border: 1px solid var(--border); border-radius: 3px;
+      padding: 4px 8px; font-family: var(--font); font-size: 11px; cursor: pointer;
+      transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    .flip-btn:hover  { background: rgba(40,60,160,0.4); border-color: var(--border-hi); color: var(--text-bright); }
+    .flip-btn.active { background: rgba(30,50,140,0.6); color: var(--green); border-color: rgba(30,180,100,0.4); }
+
+    .flip-fps-wrap { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+    .flip-fps-label { color: var(--text-dim); font-size: 10px; }
+
+    #flip-fps {
+      -webkit-appearance: none; appearance: none;
+      width: 80px; height: 3px; background: rgba(60,80,160,0.3);
+      border-radius: 2px; outline: none; cursor: pointer;
+    }
+    #flip-fps::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 11px; height: 11px;
+      border-radius: 50%; background: var(--accent); cursor: pointer;
+    }
+    #flip-fps-val { color: var(--green); min-width: 20px; font-size: 10px; }
+
+    /* Grid */
+    #grid-wrap { flex: 1; overflow-y: auto; padding: 8px; }
+    #grid-wrap::-webkit-scrollbar { width: 4px; }
+    #grid-wrap::-webkit-scrollbar-thumb { background: rgba(60,80,160,0.3); border-radius: 2px; }
+
+    #sprite-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 76px);
+      gap: 4px;
+    }
+
+    .grid-cell {
+      width: 76px; height: 76px; flex-shrink: 0;
+      background: rgba(6,7,16,0.8); border: 1px solid var(--border);
+      border-radius: 3px; cursor: pointer; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.1s, background 0.1s;
+      position: relative;
+    }
+    .grid-cell:hover   { border-color: var(--border-hi); background: rgba(20,30,80,0.5); }
+    .grid-cell.selected { border-color: var(--accent); background: rgba(20,40,160,0.4); box-shadow: 0 0 0 1px rgba(60,100,255,0.3); }
+    .grid-cell.curated { border-color: rgba(30,160,90,0.55); }
+    .grid-cell.curated::after {
+      content: '✓'; position: absolute; top: 2px; right: 4px;
+      color: var(--green); font-size: 9px;
+    }
+
+    .grid-cell img {
+      max-width: 100%; max-height: 100%; display: block;
+      image-rendering: pixelated; image-rendering: crisp-edges;
+      object-fit: contain;
+    }
+
+    #grid-empty { color: var(--text-dim); font-size: 11px; padding: 20px; text-align: center; }
+
+    /* ── Right: Curation ──────────────────────────────────────────────────── */
+    #pane-curation { background: var(--panel-alt); }
+
+    #curate-form { flex-shrink: 0; padding: 10px; border-bottom: 1px solid var(--border); }
+
+    #curate-preview {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+      min-height: 36px;
+    }
+    #curate-thumb {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: rgba(4,5,12,0.8); border: 1px solid var(--border);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    #curate-thumb img { max-width: 100%; max-height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+    #curate-filename { color: var(--text-dim); font-size: 10px; line-height: 1.4; word-break: break-all; }
+    #curate-filename.has-file { color: var(--text-bright); }
+
+    .cf-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .cf-label { color: var(--text-dim); font-size: 10px; width: 30px; flex-shrink: 0; letter-spacing: 1px; }
+
+    .cf-input {
+      flex: 1; background: rgba(10,12,28,0.85); color: var(--green);
+      border: 1px solid var(--border); border-radius: 3px;
+      padding: 4px 7px; font-family: var(--font); font-size: 11px; outline: none;
+    }
+    .cf-input:focus { border-color: var(--border-hi); }
+    .cf-input[type="number"] { max-width: 64px; }
+
+    #curate-category {
+      flex: 1; background: rgba(10,12,28,0.85) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%235566aa'/%3E%3C/svg%3E") no-repeat right 7px center;
+      color: var(--text); border: 1px solid var(--border); border-radius: 3px;
+      padding: 4px 22px 4px 7px; font-family: var(--font); font-size: 11px;
+      outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+    }
+    #curate-category:focus { border-color: var(--border-hi); }
+    #curate-category option { background: #0d0e20; }
+
+    #curate-add {
+      width: 100%; margin-top: 7px;
+      background: rgba(30,50,160,0.35); color: var(--accent);
+      border: 1px solid rgba(50,80,220,0.4); border-radius: 3px;
+      padding: 6px; font-family: var(--font); font-size: 11px; cursor: pointer;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    #curate-add:hover { background: rgba(40,70,200,0.5); border-color: var(--border-hi); color: var(--text-bright); }
+    #curate-add:disabled { opacity: 0.4; cursor: default; }
+
+    /* Curated list */
+    #curate-list { flex: 1; overflow-y: auto; padding: 6px 8px; }
+    #curate-list::-webkit-scrollbar { width: 4px; }
+    #curate-list::-webkit-scrollbar-thumb { background: rgba(60,80,160,0.3); border-radius: 2px; }
+
+    .cl-empty { color: var(--text-dim); text-align: center; padding: 16px 0; font-size: 10px; }
+
+    .cl-row {
+      display: flex; align-items: center; gap: 5px; padding: 4px 4px;
+      border-radius: 3px; border-bottom: 1px solid rgba(40,50,100,0.15);
+    }
+    .cl-row:hover { background: rgba(20,30,80,0.3); }
+    .cl-id   { color: var(--accent); min-width: 22px; font-size: 10px; flex-shrink: 0; }
+    .cl-type {
+      font-size: 9px; font-weight: bold; padding: 1px 5px; border-radius: 2px;
+      letter-spacing: 0.5px; flex-shrink: 0;
+    }
+    .cl-type-floor  { background: rgba(0,80,40,0.4);  color: #22dd88; border: 1px solid rgba(0,140,70,0.3); }
+    .cl-type-wall   { background: rgba(0,40,80,0.4);  color: #44aaff; border: 1px solid rgba(0,80,160,0.3); }
+    .cl-type-prop   { background: rgba(80,50,0,0.4);  color: #ffaa33; border: 1px solid rgba(160,100,0,0.3); }
+    .cl-type-entity { background: rgba(60,0,80,0.4);  color: #cc66ff; border: 1px solid rgba(120,0,160,0.3); }
+
+    .cl-name { flex: 1; color: var(--text); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cl-del  {
+      background: none; border: none; color: var(--text-dim); cursor: pointer;
+      font-size: 13px; line-height: 1; padding: 0 2px; flex-shrink: 0;
+      transition: color 0.1s;
+    }
+    .cl-del:hover { color: var(--red); }
+
+    /* JSON preview + actions */
+    #curate-json-wrap {
+      flex-shrink: 0; border-top: 1px solid var(--border);
+      display: flex; flex-direction: column;
+    }
+    #curate-json {
+      flex: 0 0 100px; resize: none;
+      background: rgba(4,5,12,0.85); color: rgba(80,200,120,0.7);
+      border: none; border-bottom: 1px solid var(--border);
+      padding: 6px 8px; font-family: var(--font); font-size: 10px;
+      outline: none; overflow-y: auto; white-space: pre;
+    }
+    #curate-json::-webkit-scrollbar { width: 3px; }
+    #curate-json::-webkit-scrollbar-thumb { background: rgba(40,80,40,0.4); }
+
+    .curate-actions { display: flex; gap: 5px; padding: 7px 8px; }
+
+    .ca-btn {
+      flex: 1; background: rgba(14,16,34,0.9); color: var(--text);
+      border: 1px solid var(--border); border-radius: 3px;
+      padding: 5px 0; font-family: var(--font); font-size: 10px;
+      cursor: pointer; transition: background 0.1s, border-color 0.1s, color 0.1s;
+    }
+    .ca-btn:hover { background: rgba(30,40,100,0.6); border-color: var(--border-hi); color: var(--text-bright); }
+    .ca-btn.ca-copy { color: var(--green); border-color: rgba(0,160,80,0.3); }
+    .ca-btn.ca-copy:hover { background: rgba(0,60,30,0.5); border-color: rgba(0,200,100,0.5); }
+    .ca-btn.ca-copy.copied { background: rgba(0,80,40,0.5); color: #22ffaa; border-color: rgba(0,200,100,0.6); }
+    .ca-btn.ca-clear { color: var(--red); border-color: rgba(160,30,30,0.2); }
+    .ca-btn.ca-clear:hover { background: rgba(80,0,0,0.3); border-color: rgba(200,50,50,0.4); }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header id="lab-header">
+    <span class="lab-logo">ASSET LAB</span>
+    <span class="lab-sep">·</span>
+    <span id="lab-stats">indexing…</span>
+  </header>
+
+  <div id="lab-body">
+
+    <!-- ── Left: Library ─────────────────────────────────────────────────── -->
+    <aside class="pane" id="pane-library">
+      <div class="pane-hdr">LIBRARY <span class="badge" id="folder-count">0</span></div>
+      <input type="search" id="lib-search" placeholder="Search folders…" autocomplete="off">
+      <div id="folder-list"></div>
+    </aside>
+
+    <!-- ── Center: Viewer ────────────────────────────────────────────────── -->
+    <main class="pane" id="pane-viewer">
+
+      <div id="flipbook">
+        <div id="flip-top">
+          <div id="flip-stage">
+            <img id="flip-img" src="" alt="" style="display:none">
+            <span id="flip-empty">no folder</span>
+          </div>
+          <div id="flip-info">
+            <div id="flip-folder-name">— select a folder —</div>
+            <div id="flip-filename"></div>
+            <div id="flip-counter"></div>
+            <div class="flip-controls">
+              <button class="flip-btn" id="flip-prev" title="Previous frame">◀</button>
+              <button class="flip-btn active" id="flip-play" title="Play / Pause">⏸</button>
+              <button class="flip-btn" id="flip-next" title="Next frame">▶</button>
+              <div class="flip-fps-wrap">
+                <span class="flip-fps-label">FPS</span>
+                <input type="range" id="flip-fps" min="1" max="30" value="12">
+                <span id="flip-fps-val">12</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="grid-wrap">
+        <div id="sprite-grid"><div id="grid-empty">Select a folder from the library.</div></div>
+      </div>
+
+    </main>
+
+    <!-- ── Right: Curation ───────────────────────────────────────────────── -->
+    <aside class="pane" id="pane-curation">
+      <div class="pane-hdr">CURATION</div>
+
+      <div id="curate-form">
+        <div id="curate-preview">
+          <div id="curate-thumb"></div>
+          <div id="curate-filename">click a sprite to select</div>
+        </div>
+        <div class="cf-row">
+          <span class="cf-label">ID</span>
+          <input class="cf-input" type="number" id="curate-id" min="1" value="1">
+        </div>
+        <div class="cf-row">
+          <span class="cf-label">CAT</span>
+          <select id="curate-category">
+            <option value="floor">Floor</option>
+            <option value="prop">Prop</option>
+            <option value="entity">Entity</option>
+            <option value="wall">Wall</option>
+          </select>
+        </div>
+        <div class="cf-row">
+          <span class="cf-label">NAME</span>
+          <input class="cf-input" type="text" id="curate-name" placeholder="friendly name">
+        </div>
+        <button id="curate-add" disabled>+ Add to Dictionary</button>
+      </div>
+
+      <div class="pane-hdr">
+        DICTIONARY
+        <span class="badge" id="curate-count">0</span>
+      </div>
+      <div id="curate-list"><div class="cl-empty">No items yet.</div></div>
+
+      <div id="curate-json-wrap">
+        <textarea id="curate-json" readonly spellcheck="false" placeholder="// dictionary preview"></textarea>
+        <div class="curate-actions">
+          <button class="ca-btn ca-copy" id="curate-copy">Copy Config</button>
+          <button class="ca-btn ca-clear" id="curate-clear">Clear All</button>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+</div>
+<script type="module" src="/src/lab.js"></script>
+</body>
+</html>
