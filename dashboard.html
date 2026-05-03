@@ -22,6 +22,7 @@
       --amber:      #fbbf24;
       --purple:     #a78bfa;
       --red:        #f87171;
+      --orange:     #fb923c;
       --font:       Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
       --font-mono:  'Cascadia Code', 'Fira Code', 'Courier New', monospace;
     }
@@ -107,6 +108,9 @@
       transition: all 0.1s;
     }
     .layer-btn.active { background: rgba(56,189,248,0.12); color: var(--accent); border-color: rgba(56,189,248,0.4); }
+    .layer-btn[data-layer="collision"].active {
+      background: rgba(251,146,60,0.12); color: var(--orange); border-color: rgba(251,146,60,0.4);
+    }
     .layer-btn:hover:not(.active) { color: var(--text); border-color: #4b5563; }
 
     #brush-display {
@@ -212,6 +216,7 @@
     .layer-floor     .insp-dot { background: var(--green); }
     .layer-prop      .insp-dot { background: var(--amber); }
     .layer-overhead  .insp-dot { background: var(--purple); }
+    .layer-collision .insp-dot { background: var(--orange); }
     .insp-layer-name {
       font-size: 11px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 1px; color: var(--text-dim); flex: 1;
@@ -390,6 +395,33 @@
       background: var(--surface); border: 1px solid var(--focus-ring);
       border-radius: 3px; color: var(--text-hi); outline: none;
     }
+
+    /* ── Logic Brush Panel (Collision mode) ───────────────────────────────── */
+    .logic-brush-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; padding: 14px;
+    }
+    .logic-brush-btn {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 20px 12px;
+      border-radius: 6px; cursor: pointer; border: 2px solid transparent;
+      background: var(--surface); font-family: var(--font); transition: all 0.12s;
+    }
+    .logic-brush-btn:focus-visible { outline: 2px solid var(--focus-ring); }
+    .logic-brush-walkable { border-color: rgba(0,255,0,0.2); }
+    .logic-brush-walkable:hover  { background: rgba(0,255,0,0.07); border-color: rgba(0,255,0,0.5); }
+    .logic-brush-walkable.active { background: rgba(0,255,0,0.12); border-color: #00ff00; }
+    .logic-brush-blocked  { border-color: rgba(255,68,68,0.2); }
+    .logic-brush-blocked:hover   { background: rgba(255,68,68,0.07); border-color: rgba(255,68,68,0.5); }
+    .logic-brush-blocked.active  { background: rgba(255,68,68,0.12); border-color: #ff4444; }
+    .lbtn-icon  { font-size: 22px; line-height: 1; }
+    .lbtn-label { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    .lbtn-hint  { font-size: 10px; color: var(--text-dim); }
+    .logic-brush-walkable       .lbtn-icon  { color: #00ff00; }
+    .logic-brush-walkable       .lbtn-label { color: #00ff00; }
+    .logic-brush-blocked        .lbtn-icon  { color: #ff4444; }
+    .logic-brush-blocked        .lbtn-label { color: #ff4444; }
+    .logic-brush-btn.active     .lbtn-hint  { opacity: 0.7; color: inherit; }
   </style>
 </head>
 <body>
@@ -425,9 +457,11 @@
 
         <span class="vp-lbl">Layer</span>
         <div id="layer-toggle" role="group" aria-label="Active paint layer">
-          <button class="layer-btn active" data-layer="floor"    aria-pressed="true" >Floor</button>
-          <button class="layer-btn"        data-layer="prop"     aria-pressed="false">Prop</button>
-          <button class="layer-btn"        data-layer="overhead" aria-pressed="false">Overhead</button>
+          <button class="layer-btn active" data-layer="floor"     aria-pressed="true" >Floor</button>
+          <button class="layer-btn"        data-layer="prop"      aria-pressed="false">Prop</button>
+          <button class="layer-btn"        data-layer="overhead"  aria-pressed="false">Overhead</button>
+          <div class="hdr-sep"></div>
+          <button class="layer-btn"        data-layer="collision" aria-pressed="false">⬡ Collision</button>
         </div>
 
         <button id="eraser-btn" aria-pressed="false">⌫ Erase</button>

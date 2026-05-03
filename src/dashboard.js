@@ -44,12 +44,13 @@ let lastPanY  = 0;
 let mapData = {};
 
 // ── Paint state ───────────────────────────────────────────────────────────────
-let activeBrush  = null;    // folderId string | null
-let activeLayer  = 'floor'; // 'floor' | 'prop' | 'overhead'
-let isErasing    = false;
-let isPainting   = false;
-let selectedTile = null;    // { col, row } | null
-let lastPainted  = null;    // avoids repainting the same tile during drag
+let activeBrush     = null;    // folderId | 'walkable' | 'blocked' | null
+let activeLayer     = 'floor'; // 'floor' | 'prop' | 'overhead' | 'collision'
+let isErasing       = false;
+let isPainting      = false;
+let selectedTile    = null;    // { col, row } | null
+let lastPainted     = null;    // avoids repainting the same tile during drag
+let lastVisualBrush = null;    // restored when leaving collision mode
 
 // ── Undo stack ─────────────────────────────────────────────────────────────────
 const undoStack = [];
@@ -163,13 +164,35 @@ function render() {
     drawTileLayers(sx, sy, layers);
   }
 
-  // Step 5 — selection ring
+  // Step 5 — Collision mode: dim the visual pass so the mesh pops visually
+  if (activeLayer === 'collision') {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(cameraX, cameraY, canvas.width / currentScale, canvas.height / currentScale);
+  }
+
+  // Step 6 — Collision mesh overlay (always drawn; more opaque in collision mode)
+  const collisionAlpha = activeLayer === 'collision' ? 0.72 : 0.35;
+  for (const [key, layers] of Object.entries(mapData)) {
+    if (!layers.collision) continue;
+    const [col, row] = key.split(',').map(Number);
+    const sx = tileX(col, row);
+    const sy = tileY(row);
+    ctx.save();
+    ctx.globalAlpha = collisionAlpha;
+    drawDiamond(sx, sy, layers.collision === 'walkable' ? '#00ff00' : '#ff0000', null);
+    // Crisp 1px border so adjacent tiles read cleanly
+    ctx.globalAlpha = Math.min(1, collisionAlpha + 0.18);
+    drawDiamond(sx, sy, null, layers.collision === 'walkable' ? '#00cc00' : '#cc0000', 0.5);
+    ctx.restore();
+  }
+
+  // Step 7 — selection ring (always on top)
   if (selectedTile) {
     const { col, row } = selectedTile;
     drawDiamond(tileX(col, row), tileY(row), null, 'rgba(56,189,248,0.9)', 1.5);
   }
 
-  // Step 6 — restore transform
+  // Step 8 — restore transform
   ctx.restore();
 }
 
@@ -278,9 +301,10 @@ function applyBrush(col, row) {
     }
   } else {
     if (!activeBrush) return;
-    if (!mapData[key]) mapData[key] = { floor: null, prop: null, overhead: null };
+    if (!mapData[key]) mapData[key] = { floor: null, prop: null, overhead: null, collision: null };
     // Store the full brushId ("folderId" or "folderId/filename") so the renderer
     // can draw the exact sprite the user selected, not just the folder representative.
+    // For the collision layer this is 'walkable' or 'blocked'.
     mapData[key][activeLayer] = activeBrush;
   }
   render();
@@ -531,13 +555,89 @@ zoomSelect.addEventListener('change', e => {
 document.getElementById('layer-toggle').addEventListener('click', e => {
   const btn = e.target.closest('.layer-btn');
   if (!btn) return;
-  activeLayer = btn.dataset.layer;
   document.querySelectorAll('.layer-btn').forEach(b => {
     const on = b === btn;
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', String(on));
   });
+  onLayerSwitch(btn.dataset.layer);
 });
+
+// Central handler for every layer change — manages the bottom panel and brush state.
+function onLayerSwitch(layer) {
+  const wasCollision = activeLayer === 'collision';
+  activeLayer = layer;
+
+  if (layer === 'collision') {
+    // Save the current visual brush so we can restore it later
+    if (activeBrush && activeBrush !== 'walkable' && activeBrush !== 'blocked') {
+      lastVisualBrush = activeBrush;
+    }
+    // Clear the brush until the user picks Walkable or Blocked
+    activeBrush = null;
+    brushLabel.textContent = '— none —';
+    brushSwatch.innerHTML = '';
+
+    showLogicBrushPanel();
+  } else {
+    // Returning from collision mode → restore the sprite browser
+    if (wasCollision) {
+      activeBrush = lastVisualBrush ?? null;
+      if (activeBrush) updateBrushUI(activeBrush);
+      else { brushLabel.textContent = '— none —'; brushSwatch.innerHTML = ''; }
+
+      if (activeLibFolder) {
+        openFolder(activeLibFolder);
+      } else {
+        document.getElementById('sprite-content').innerHTML =
+          '<span style="color:var(--text-dim);font-size:12px;font-style:italic;padding:14px;display:block">Select a folder to browse its sprites.</span>';
+      }
+    }
+  }
+
+  render(); // redraw to show/hide dim overlay and collision mesh alpha
+}
+
+// Build the Walkable / Blocked logic-brush panel inside #sprite-content.
+function showLogicBrushPanel() {
+  const content = document.getElementById('sprite-content');
+  content.innerHTML = '';
+
+  const hdr = document.createElement('div');
+  hdr.className = 'sprite-content-hdr';
+  hdr.textContent = 'Collision Layer — choose a brush';
+  content.appendChild(hdr);
+
+  const grid = document.createElement('div');
+  grid.className = 'logic-brush-grid';
+
+  const defs = [
+    { id: 'walkable', icon: '✓', label: 'Walkable', hint: 'Passable terrain' },
+    { id: 'blocked',  icon: '✗', label: 'Blocked',  hint: 'Impassable obstacle' },
+  ];
+
+  for (const { id, icon, label, hint } of defs) {
+    const btn = document.createElement('button');
+    btn.className = `logic-brush-btn logic-brush-${id}`;
+    btn.dataset.brushId = id;
+    btn.setAttribute('tabindex', '0');
+    btn.setAttribute('aria-label', label);
+    btn.innerHTML = `
+      <span class="lbtn-icon">${icon}</span>
+      <span class="lbtn-label">${label}</span>
+      <span class="lbtn-hint">${hint}</span>`;
+
+    btn.addEventListener('click', () => {
+      activeBrush = id;
+      updateBrushUI(id);
+      document.querySelectorAll('.logic-brush-btn').forEach(b =>
+        b.classList.toggle('active', b === btn));
+    });
+    grid.appendChild(btn);
+  }
+
+  content.appendChild(grid);
+}
 
 // ── Eraser toggle ─────────────────────────────────────────────────────────────
 document.getElementById('eraser-btn').addEventListener('click', () => {
@@ -566,7 +666,7 @@ function renderInspector() {
   layersEl.innerHTML    = '';
 
   const key    = `${col},${row}`;
-  const layers = mapData[key] ?? { floor: null, prop: null, overhead: null };
+  const layers = mapData[key] ?? { floor: null, prop: null, overhead: null, collision: null };
 
   const defs = [
     { id: 'floor',    label: 'Floor',    cls: 'layer-floor'    },
@@ -642,6 +742,71 @@ function renderInspector() {
     wrap.appendChild(body);
     layersEl.appendChild(wrap);
   }
+
+  // ── Collision row (special — value is 'walkable' | 'blocked' | null) ─────────
+  const colValue = layers.collision;
+  const colWrap  = document.createElement('div');
+  colWrap.className = 'insp-layer layer-collision';
+
+  const colHdr = document.createElement('div');
+  colHdr.className = 'insp-layer-hdr';
+  const colDot   = document.createElement('div');  colDot.className  = 'insp-dot';
+  const colName  = document.createElement('span'); colName.className = 'insp-layer-name'; colName.textContent = 'Collision';
+
+  const colClear = document.createElement('button');
+  colClear.className = 'insp-clear-btn';
+  colClear.textContent = '×';
+  colClear.title = 'Clear Collision';
+  if (colValue) colClear.style.display = 'block';
+  colClear.addEventListener('click', () => {
+    if (!mapData[key]) return;
+    mapData[key].collision = null;
+    if (!Object.values(mapData[key]).some(Boolean)) delete mapData[key];
+    render(); renderInspector();
+  });
+  colHdr.append(colDot, colName, colClear);
+
+  const colBody = document.createElement('div');
+  colBody.className = 'insp-layer-body';
+
+  if (colValue) {
+    const swatch = document.createElement('div');
+    swatch.className = 'insp-thumb';
+    swatch.style.background = colValue === 'walkable' ? 'rgba(0,255,0,0.2)'  : 'rgba(255,68,68,0.2)';
+    swatch.style.borderColor = colValue === 'walkable' ? 'rgba(0,255,0,0.45)' : 'rgba(255,68,68,0.45)';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'insp-folder-id';
+    lbl.textContent = colValue;
+    lbl.style.color = colValue === 'walkable' ? '#00cc00' : '#ff4444';
+
+    const tobrush = document.createElement('button');
+    tobrush.className = 'insp-set-brush';
+    tobrush.textContent = '→ Brush';
+    tobrush.style.display = 'inline-block';
+    tobrush.addEventListener('click', () => {
+      // Activate the collision layer button
+      document.querySelectorAll('.layer-btn').forEach(b => {
+        const on = b.dataset.layer === 'collision';
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', String(on));
+      });
+      onLayerSwitch('collision');
+      // Pre-select the matching logic brush
+      activeBrush = colValue;
+      updateBrushUI(colValue);
+      document.querySelectorAll('.logic-brush-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.brushId === colValue));
+    });
+    colBody.append(swatch, lbl, tobrush);
+  } else {
+    const empty = document.createElement('span');
+    empty.className = 'insp-empty-lbl'; empty.textContent = 'empty';
+    colBody.appendChild(empty);
+  }
+
+  colWrap.append(colHdr, colBody);
+  layersEl.appendChild(colWrap);
 }
 
 // ── Tag helpers ────────────────────────────────────────────────────────────────
@@ -721,9 +886,24 @@ function renderMiniTagBar(container, fid, filename) {
 
 // ── Brush UI update ────────────────────────────────────────────────────────────
 // Single source of truth for every toolbar update when the brush changes.
-// brushId may be "folderId" or "folderId/filename".
+// brushId may be "folderId", "folderId/filename", "walkable", or "blocked".
 function updateBrushUI(brushId) {
   if (!brushId) return;
+
+  // ── Logical collision brushes (not sprite-based) ──────────────────────────
+  if (brushId === 'walkable' || brushId === 'blocked') {
+    brushLabel.textContent = brushId;
+    brushSwatch.innerHTML = '';
+    const dot = document.createElement('div');
+    dot.style.cssText = `width:100%;height:100%;opacity:0.7;background:${
+      brushId === 'walkable' ? '#00ff00' : '#ff4444'};`;
+    brushSwatch.appendChild(dot);
+    isErasing = false;
+    const eraserBtn = document.getElementById('eraser-btn');
+    eraserBtn.classList.remove('active');
+    eraserBtn.setAttribute('aria-pressed', 'false');
+    return;
+  }
 
   // Split on the first '/' to recover fid and optional filename
   const slashIdx = brushId.indexOf('/');
